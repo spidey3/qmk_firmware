@@ -14,6 +14,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#pragma GCC push_options
+#pragma GCC optimize ("O3")
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "util.h"
@@ -221,3 +225,5 @@ uint8_t matrix_scan(void) {
     matrix_scan_quantum();
     return (uint8_t)changed;
 }
+
+#pragma GCC pop_options
