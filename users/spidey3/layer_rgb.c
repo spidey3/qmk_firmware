@@ -46,6 +46,7 @@ const rgblight_segment_t PROGMEM _glyphreplace_layer[] = RGBLIGHT_LAYER_SEGMENTS
 const rgblight_segment_t PROGMEM _no_layer[]     = RGBLIGHT_LAYER_SEGMENTS(FRONT(1, HSV_RED));
 const rgblight_segment_t PROGMEM _yes_layer[]    = RGBLIGHT_LAYER_SEGMENTS(FRONT(1, HSV_GREEN));
 const rgblight_segment_t PROGMEM _meh_layer[]    = RGBLIGHT_LAYER_SEGMENTS(FRONT(1, HSV_YELLOW));
+const rgblight_segment_t PROGMEM _huh_layer[]    = RGBLIGHT_LAYER_SEGMENTS(CORNERS(HSV_YELLOW), FRONT(1, HSV_BLUE), BACK(1, HSV_BLUE));
 
 // Now define the array of layers. Higher numbered layers take precedence.
 const rgblight_segment_t *const PROGMEM _rgb_layers[] = {
@@ -63,8 +64,9 @@ const rgblight_segment_t *const PROGMEM _rgb_layers[] = {
     [ACK_OFFSET + ACK_NO]     = _no_layer,
     [ACK_OFFSET + ACK_YES]    = _yes_layer,
     [ACK_OFFSET + ACK_MEH]    = _meh_layer,
+    [ACK_OFFSET + ACK_HUH]    = _huh_layer,
 
-    [ACK_OFFSET + ACK_MEH + 1] = NULL
+    [ACK_OFFSET + ACK_HUH + 1] = NULL
 };
 
 // clang-format on 
@@ -293,11 +295,17 @@ void matrix_scan_user_rgb(void) {
 #endif
 }
 
+static bool spi_suspended = false;
+
 void suspend_power_down_user_rgb(void) {
-    clear_rgb_layers();
+    if (!spi_suspended) {
+        clear_rgb_layers();
+        spi_suspended = true;
+    }
 }
 
 void suspend_wakeup_init_user_rgb(void) {
+    spi_suspended = false;
     do_rgb_layers(default_layer_state, LAYER_BASE_DEFAULT + 1, LAYER_BASE_REGULAR);
     do_rgb_layers(layer_state, LAYER_BASE_REGULAR, LAYER_BASE_END);
     led_update_user_rgb(host_keyboard_led_state());
@@ -352,7 +360,12 @@ void post_process_record_user_rgb(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         // Acks follow...
         case DEBUG:
-            rgb_layer_ack_yn(debug_enable);
+            if (debug_matrix || debug_keyboard)
+                rgb_layer_ack(ACK_HUH);
+            else if (debug_enable)
+                rgb_layer_ack(ACK_YES);
+            else
+                rgb_layer_ack(ACK_NO);
             break;
 
         case SPI_LNX:
