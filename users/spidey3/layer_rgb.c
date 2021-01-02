@@ -32,8 +32,10 @@ void eeconfig_init_user_rgb(void) { spidey_glow(); }
 #define FRONT(inset, color) { RGBLED_NUM / 2 + inset, RGBLED_NUM / 2 - 2 * inset, color }
 #define BACK(inset, color) { inset, RGBLED_NUM / 2 - 2 * inset, color }
 
+const rgblight_segment_t PROGMEM _none[] = NONE;
+
 #define LAYER_OFFSET 0
-const rgblight_segment_t PROGMEM _layer0_layer[] = NONE;                                           // _BASE
+// No indicator for base layer
 const rgblight_segment_t PROGMEM _layer1_layer[] = RGBLIGHT_LAYER_SEGMENTS(CORNERS(HSV_MAGENTA));  // _NUMPAD
 const rgblight_segment_t PROGMEM _layer2_layer[] = RGBLIGHT_LAYER_SEGMENTS(CORNERS(HSV_GREEN));    // _FN
 
@@ -54,14 +56,14 @@ const rgblight_segment_t PROGMEM _huh_layer[]    = RGBLIGHT_LAYER_SEGMENTS(CORNE
 
 #define UNICODE_OFFSET 11
 const rgblight_segment_t PROGMEM _uc_mac_layer[]  = RGBLIGHT_LAYER_SEGMENTS(CORNER_BR(HSV_PURPLE));
-const rgblight_segment_t PROGMEM _uc_lnx_layer[]  = NONE;
+// No indicator for UC_LNX
 // UC_WIN disabled in config.h
 // UC_BSD not implemented
 const rgblight_segment_t PROGMEM _uc_winc_layer[] = RGBLIGHT_LAYER_SEGMENTS(CORNER_BR(HSV_CYAN));
 
 // Now define the array of layers. Higher numbered layers take precedence.
 const rgblight_segment_t *const PROGMEM _rgb_layers[] = {
-    [LAYER_OFFSET + _BASE]   = _layer0_layer,
+    [LAYER_OFFSET + _BASE]   = _none,
     [LAYER_OFFSET + _NUMPAD] = _layer1_layer,
     [LAYER_OFFSET + _FN]     = _layer2_layer,
 
@@ -72,18 +74,18 @@ const rgblight_segment_t *const PROGMEM _rgb_layers[] = {
     [MISC_OFFSET + 0] = _gflock_layer,
     [MISC_OFFSET + 1] = _glyphreplace_layer,
 
-    [UNICODE_OFFSET + UC_MAC]  = _uc_mac_layer,
-    [UNICODE_OFFSET + UC_LNX]  = _uc_lnx_layer,
-    [UNICODE_OFFSET + UC_WIN]  = NULL, // disabled in config.h
-    [UNICODE_OFFSET + UC_BSD]  = NULL, // not implemented
-    [UNICODE_OFFSET + UC_WINC] = _uc_winc_layer,
-
     [ACK_OFFSET + ACK_NO]     = _no_layer,
     [ACK_OFFSET + ACK_YES]    = _yes_layer,
     [ACK_OFFSET + ACK_MEH]    = _meh_layer,
     [ACK_OFFSET + ACK_HUH]    = _huh_layer,
 
-    [ACK_OFFSET + ACK_HUH + 1] = NULL
+    [UNICODE_OFFSET + UC_MAC]  = _uc_mac_layer,
+    [UNICODE_OFFSET + UC_LNX]  = _none,
+    [UNICODE_OFFSET + UC_WIN]  = _none,
+    [UNICODE_OFFSET + UC_BSD]  = _none,
+    [UNICODE_OFFSET + UC_WINC] = _uc_winc_layer,
+
+    [UNICODE_OFFSET + UC__COUNT] = NULL
 };
 
 // clang-format on 
@@ -100,7 +102,7 @@ void clear_rgb_layers() {
 void do_rgb_layers(layer_state_t state, uint8_t start, uint8_t end) {
     for (uint8_t i = start; i < end; i++) {
         bool is_on = layer_state_cmp(state, i);
-        dprintf("layer[%u]=%u\n", i, is_on);
+        dprintf("layer[%u]=rl[%u]=%u\n", i, LAYER_OFFSET + i, is_on);
         rgblight_set_layer_state(LAYER_OFFSET + i, is_on);
     }
 }
@@ -109,7 +111,7 @@ void do_rgb_unicode(void) {
     uint8_t uc_mode = get_unicode_input_mode();
     for (uint8_t i = 0; i < UC__COUNT; i++) {
         bool is_on = i == uc_mode;
-        dprintf("unicode[%u]=%u\n", i, is_on);
+        dprintf("unicode[%u]=rl[%u]=%u\n", i, UNICODE_OFFSET + i, is_on);
         rgblight_set_layer_state(UNICODE_OFFSET + i, is_on);
     }
 }
