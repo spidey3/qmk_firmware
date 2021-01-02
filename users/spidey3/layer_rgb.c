@@ -6,6 +6,9 @@
 extern bool     spi_gflock;
 extern uint16_t spi_replace_mode;
 
+extern bool     spi_gflock;
+extern uint16_t spi_replace_mode;
+
 void spidey_glow(void) {
     rgblight_enable();
     rgblight_mode(RGBLIGHT_MODE_TWINKLE + 1);
@@ -20,6 +23,7 @@ void eeconfig_init_user_rgb(void) { spidey_glow(); }
 // clang-format off
 
 // Convenience macros
+#define NONE { RGBLIGHT_END_SEGMENTS }
 #define CORNER_BL(color) { 0, 1, color }
 #define CORNER_BR(color) { RGBLED_NUM / 2 - 1, 1, color }
 #define CORNER_FR(color) { RGBLED_NUM / 2, 1, color }
@@ -29,9 +33,9 @@ void eeconfig_init_user_rgb(void) { spidey_glow(); }
 #define BACK(inset, color) { inset, RGBLED_NUM / 2 - 2 * inset, color }
 
 #define LAYER_OFFSET 0
-const rgblight_segment_t PROGMEM _layer1_layer[] = RGBLIGHT_LAYER_SEGMENTS(CORNER_BR(HSV_PURPLE));
-const rgblight_segment_t PROGMEM _layer2_layer[] = RGBLIGHT_LAYER_SEGMENTS(CORNERS(HSV_MAGENTA));
-const rgblight_segment_t PROGMEM _layer3_layer[] = RGBLIGHT_LAYER_SEGMENTS(CORNERS(HSV_GREEN));
+const rgblight_segment_t PROGMEM _layer0_layer[] = NONE;                                           // _BASE
+const rgblight_segment_t PROGMEM _layer1_layer[] = RGBLIGHT_LAYER_SEGMENTS(CORNERS(HSV_MAGENTA));  // _NUMPAD
+const rgblight_segment_t PROGMEM _layer2_layer[] = RGBLIGHT_LAYER_SEGMENTS(CORNERS(HSV_GREEN));    // _FN
 
 #define LOCK_OFFSET 3
 const rgblight_segment_t PROGMEM _numlock_layer[]    = RGBLIGHT_LAYER_SEGMENTS(FRONT(3, HSV_YELLOW));
@@ -48,11 +52,18 @@ const rgblight_segment_t PROGMEM _yes_layer[]    = RGBLIGHT_LAYER_SEGMENTS(FRONT
 const rgblight_segment_t PROGMEM _meh_layer[]    = RGBLIGHT_LAYER_SEGMENTS(FRONT(1, HSV_YELLOW));
 const rgblight_segment_t PROGMEM _huh_layer[]    = RGBLIGHT_LAYER_SEGMENTS(CORNERS(HSV_YELLOW), FRONT(1, HSV_BLUE), BACK(1, HSV_BLUE));
 
+#define UNICODE_OFFSET 11
+const rgblight_segment_t PROGMEM _uc_mac_layer[]  = RGBLIGHT_LAYER_SEGMENTS(CORNER_BR(HSV_PURPLE));
+const rgblight_segment_t PROGMEM _uc_lnx_layer[]  = NONE;
+// UC_WIN disabled in config.h
+// UC_BSD not implemented
+const rgblight_segment_t PROGMEM _uc_winc_layer[] = RGBLIGHT_LAYER_SEGMENTS(CORNER_BR(HSV_CYAN));
+
 // Now define the array of layers. Higher numbered layers take precedence.
 const rgblight_segment_t *const PROGMEM _rgb_layers[] = {
-    [LAYER_OFFSET + 0] = _layer1_layer,
-    [LAYER_OFFSET + 1] = _layer2_layer,
-    [LAYER_OFFSET + 2] = _layer3_layer,
+    [LAYER_OFFSET + _BASE]   = _layer0_layer,
+    [LAYER_OFFSET + _NUMPAD] = _layer1_layer,
+    [LAYER_OFFSET + _FN]     = _layer2_layer,
 
     [LOCK_OFFSET + USB_LED_NUM_LOCK]    = _numlock_layer,
     [LOCK_OFFSET + USB_LED_CAPS_LOCK]   = _capslock_layer,
@@ -60,6 +71,12 @@ const rgblight_segment_t *const PROGMEM _rgb_layers[] = {
 
     [MISC_OFFSET + 0] = _gflock_layer,
     [MISC_OFFSET + 1] = _glyphreplace_layer,
+
+    [UNICODE_OFFSET + UC_MAC]  = _uc_mac_layer,
+    [UNICODE_OFFSET + UC_LNX]  = _uc_lnx_layer,
+    [UNICODE_OFFSET + UC_WIN]  = NULL, // disabled in config.h
+    [UNICODE_OFFSET + UC_BSD]  = NULL, // not implemented
+    [UNICODE_OFFSET + UC_WINC] = _uc_winc_layer,
 
     [ACK_OFFSET + ACK_NO]     = _no_layer,
     [ACK_OFFSET + ACK_YES]    = _yes_layer,
@@ -84,8 +101,25 @@ void do_rgb_layers(layer_state_t state, uint8_t start, uint8_t end) {
     for (uint8_t i = start; i < end; i++) {
         bool is_on = layer_state_cmp(state, i);
         dprintf("layer[%u]=%u\n", i, is_on);
-        rgblight_set_layer_state(LAYER_OFFSET + i - 1, is_on);
+        rgblight_set_layer_state(LAYER_OFFSET + i, is_on);
     }
+}
+
+void do_rgb_unicode(void) {
+    uint8_t uc_mode = get_unicode_input_mode();
+    for (uint8_t i = 0; i < UC__COUNT; i++) {
+        bool is_on = i == uc_mode;
+        dprintf("unicode[%u]=%u\n", i, is_on);
+        rgblight_set_layer_state(UNICODE_OFFSET + i, is_on);
+    }
+}
+
+void do_rgb_all(void) {
+    do_rgb_layers(default_layer_state, LAYER_BASE_DEFAULT, LAYER_BASE_REGULAR);
+    do_rgb_layers(layer_state, LAYER_BASE_REGULAR, LAYER_BASE_END);
+    do_rgb_unicode();
+    rgblight_set_layer_state(MISC_OFFSET + 0, spi_gflock);
+    rgblight_set_layer_state(MISC_OFFSET + 1, spi_replace_mode != SPI_NORMAL);
 }
 
 extern rgblight_config_t rgblight_config;
@@ -140,8 +174,7 @@ void startup_animation_init(void) {
 void keyboard_post_init_user_rgb(void) {
     // Enable the LED layers
     rgblight_layers = _rgb_layers;
-    do_rgb_layers(default_layer_state, LAYER_BASE_DEFAULT + 1, LAYER_BASE_REGULAR);
-    do_rgb_layers(layer_state, LAYER_BASE_REGULAR, LAYER_BASE_END);
+    do_rgb_all();
 
 #if defined(RGBLIGHT_STARTUP_ANIMATION)
     startup_animation_init();
@@ -306,15 +339,11 @@ void suspend_power_down_user_rgb(void) {
 
 void suspend_wakeup_init_user_rgb(void) {
     spi_suspended = false;
-    do_rgb_layers(default_layer_state, LAYER_BASE_DEFAULT + 1, LAYER_BASE_REGULAR);
-    do_rgb_layers(layer_state, LAYER_BASE_REGULAR, LAYER_BASE_END);
-    led_update_user_rgb(host_keyboard_led_state());
-    rgblight_set_layer_state(MISC_OFFSET + 0, spi_gflock);
-    rgblight_set_layer_state(MISC_OFFSET + 1, spi_replace_mode != SPI_NORMAL);
+    do_rgb_all();
 }
 
 layer_state_t default_layer_state_set_user_rgb(layer_state_t state) {
-    do_rgb_layers(state, 1u, LAYER_BASE_REGULAR);
+    do_rgb_layers(state, LAYER_BASE_DEFAULT, LAYER_BASE_REGULAR);
     return state;
 }
 
@@ -368,12 +397,6 @@ void post_process_record_user_rgb(uint16_t keycode, keyrecord_t *record) {
                 rgb_layer_ack(ACK_NO);
             break;
 
-        case SPI_LNX:
-        case SPI_OSX:
-        case SPI_WIN:
-            rgb_layer_ack(ACK_MEH);
-            break;
-
         case SPI_GFLOCK:
             rgb_layer_ack_yn(spi_gflock);
             rgblight_set_layer_state(MISC_OFFSET + 0, spi_gflock);
@@ -399,6 +422,17 @@ void post_process_record_user_rgb(uint16_t keycode, keyrecord_t *record) {
         case NK_ON:
         case NK_OFF:
             rgb_layer_ack_yn(keymap_config.nkro);
+            break;
+#endif
+
+#if defined(UNICODE_ENABLE) || defined(UNICODEMAP_ENABLE) || defined(UCIS_ENABLE)
+        case SPI_LNX:
+        case SPI_OSX:
+        case SPI_WIN:
+        case UC_MOD:
+        case UC_RMOD:
+            rgb_layer_ack(ACK_MEH);
+            do_rgb_unicode();
             break;
 #endif
     }
