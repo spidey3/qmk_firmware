@@ -338,6 +338,15 @@ void suspend_wakeup_init_user_rgb(void) {
     do_rgb_all();
 }
 
+void shutdown_user_rgb(void) {
+    clear_rgb_layers();
+    rgblight_enable_noeeprom();
+    rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+    for (int i = 0; i < RGBLED_NUM; i++) {
+        rgblight_setrgb_at(0xFF, 0x80 * (i % 2), 0, i);
+    }
+}
+
 layer_state_t default_layer_state_set_user_rgb(layer_state_t state) {
     do_rgb_layers(state, LAYER_BASE_DEFAULT, LAYER_BASE_REGULAR);
     return state;
