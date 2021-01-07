@@ -207,6 +207,11 @@ bool process_rgb(const uint16_t keycode, const keyrecord_t *record) {
                 rgblight_mode(RGBLIGHT_MODE_RGB_TEST);
 #endif
                 return false;
+            case RGB_RESET_FROM_EEPROM:
+#if defined(RGBLIGHT_ENABLE) && !defined(RGBLIGHT_DISABLE_KEYCODES) && defined(RGBLIGHT_EFFECT_RGB_TEST)
+                rgblight_reset_from_eeprom();
+#endif
+                return false;
         }
     }
 
