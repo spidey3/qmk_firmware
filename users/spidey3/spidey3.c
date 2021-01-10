@@ -121,6 +121,19 @@ bool process_gflock(uint16_t keycode, keyrecord_t *record) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    dprintf("key event: kc: %02X, col: %02u, row: %02u, pressed: %u mods: %08b "
+#if !defined(NO_ACTION_ONESHOT)
+            "os: %08b "
+#endif
+            "weak: %08b\n",
+            keycode, record->event.key.col, record->event.key.row, record->event.pressed, bitrev(get_mods()),
+#if !defined(NO_ACTION_ONESHOT)
+            bitrev(get_oneshot_mods()),
+#endif
+            bitrev(get_weak_mods()));
+    dprintf("default layer state=%06b highest=%u\n", default_layer_state, get_highest_layer(default_layer_state));
+    dprintf("layer state=%06b highest=%u\n", layer_state, get_highest_layer(layer_state));
+
     if (!rand_seeded) {
         srand(record->event.time % keycode);
         rand_seeded = true;
@@ -309,6 +322,7 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 layer_state_t default_layer_state_set_user(layer_state_t state) {
+    dprintf("default layer state=%06b highest=%u\n", state, get_highest_layer(state));
 #ifdef RGBLIGHT_ENABLE
     return default_layer_state_set_user_rgb(state);
 #else
@@ -317,6 +331,7 @@ layer_state_t default_layer_state_set_user(layer_state_t state) {
 }
 
 layer_state_t layer_state_set_user(layer_state_t state) {
+    dprintf("layer state=%06b highest=%u\n", state, get_highest_layer(state));
 #ifdef RGBLIGHT_ENABLE
     return layer_state_set_user_rgb(state);
 #else
@@ -325,6 +340,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 }
 
 bool led_update_user(led_t led_state) {
+    dprintf("num=%u, cap=%u, scl=%u, cmp=%u, kan=%u\n", led_state.num_lock, led_state.caps_lock, led_state.scroll_lock, led_state.compose, led_state.kana);
 #ifdef RGBLIGHT_ENABLE
     return led_update_user_rgb(led_state);
 #else

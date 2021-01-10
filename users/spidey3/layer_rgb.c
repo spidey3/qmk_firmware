@@ -205,8 +205,6 @@ layer_state_t layer_state_set_user_rgb(layer_state_t state) {
 }
 
 bool led_update_user_rgb(led_t led_state) {
-    dprintf("num=%u, cap=%u, scl=%u, cmp=%u, kan=%u\n", led_state.num_lock, led_state.caps_lock, led_state.scroll_lock, led_state.compose, led_state.kana);
-
     rgblight_set_layer_state(LOCK_OFFSET + USB_LED_NUM_LOCK, led_state.num_lock);
     rgblight_set_layer_state(LOCK_OFFSET + USB_LED_CAPS_LOCK, led_state.caps_lock);
     rgblight_set_layer_state(LOCK_OFFSET + USB_LED_SCROLL_LOCK, led_state.scroll_lock);

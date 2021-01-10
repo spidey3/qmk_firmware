@@ -109,7 +109,9 @@ uint8_t matrix_scan(void)
 
     uint8_t code = xt_host_recv();
     if (!code) return 0;
-    xprintf("%02X ", code);
+#ifndef NO_DEBUG
+    dprintf("Set code: %02X state=%u\n", code, state);
+#endif
     switch (state) {
         case XT_STATE_INIT:
             switch (code) {
@@ -122,8 +124,12 @@ uint8_t matrix_scan(void)
                 default:
                     if (code < 0x80)
                         matrix_make(code);
-                    else
+                    else {
+#ifndef NO_DEBUG
+                        dprintf("  breaks: %02X\n", code & 0x7F);
+#endif
                         matrix_break(code & 0x7F);
+                    }
                     break;
             }
             break;
@@ -139,8 +145,12 @@ uint8_t matrix_scan(void)
                 default:
                     if (code < 0x80)
                         matrix_make(move_e0code(code));
-                    else
+                    else {
+#ifndef NO_DEBUG
+                        dprintf("  breaks: %02X\n", code & 0x7F);
+#endif
                         matrix_break(move_e0code(code & 0x7F));
+                    }
                     state = XT_STATE_INIT;
                     break;
             }
@@ -183,6 +193,9 @@ uint8_t matrix_scan(void)
         default:
             state = XT_STATE_INIT;
     }
+#ifndef NO_DEBUG
+    dprintf("   new state=%u\n", state);
+#endif
     matrix_scan_quantum();
     return 1;
 }
