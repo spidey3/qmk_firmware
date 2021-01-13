@@ -289,7 +289,7 @@ void matrix_scan_user_rgb(void) {
 
                 case CLEAN_UP:
                     dprintln("sua CLEAN_UP");
-                    rgblight_reset_from_eeprom();
+                    rgblight_reload_from_eeprom();
                     startup_animation_state = DONE;
                     dprintln("sua DONE");
                     break;
