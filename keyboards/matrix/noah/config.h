@@ -5,13 +5,14 @@
 
 #pragma once
 
+#define EARLY_INIT_PERFORM_BOOTLOADER_JUMP TRUE
+
 /* USB Device descriptor parameter */
 #define VENDOR_ID  0x4D58   // MX
 #define PRODUCT_ID 0x0065   // noah 65
 #define DEVICE_VER 0x0001
 #define MANUFACTURER matrix
 #define PRODUCT NOAH
-#define DESCRIPTION 65% keybaord of the Matrix abel family
 
 /* key matrix size */
 #define MATRIX_ROWS 5
