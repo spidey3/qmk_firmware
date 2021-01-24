@@ -66,8 +66,10 @@ bool process_record_glyph_replacement(uint16_t keycode, keyrecord_t *record, uin
                     clear_oneshot_mods();
 #endif
 
+                    bool caps = host_keyboard_led_state().caps_lock;
+                    bool upper = ((temp_mod | temp_osm) & MOD_MASK_SHIFT);
+                    uint32_t base = upper == caps ? baseAlphaLower : baseAlphaUpper;
                     unicode_input_start();
-                    uint32_t base = ((temp_mod | temp_osm) & MOD_MASK_SHIFT) ? baseAlphaUpper : baseAlphaLower;
                     register_hex32(base + (keycode - KC_A));
                     unicode_input_finish();
 
