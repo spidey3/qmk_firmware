@@ -8,7 +8,6 @@
 
 enum userspace_layers {
     _BASE = 0,
-    _OSX,
     _NUMPAD,
     _FN,
 };
@@ -31,6 +30,7 @@ enum custom_keycodes {
     SPI_PARENS,
     SPI_FRAKTR,
     SPI_GFLOCK,
+    SPI_KP_00,
 };
 
 #ifdef RGBLIGHT_ENABLE
