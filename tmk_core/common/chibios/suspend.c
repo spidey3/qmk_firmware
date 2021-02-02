@@ -11,6 +11,7 @@
 #include "suspend.h"
 #include "led.h"
 #include "wait.h"
+#include "debug.h"
 
 #ifdef AUDIO_ENABLE
 #    include "audio.h"
@@ -49,6 +50,7 @@ __attribute__((weak)) void suspend_power_down_kb(void) { suspend_power_down_user
  * FIXME: needs doc
  */
 void suspend_power_down(void) {
+    ring_buffer_insert("suspend_power_down()");
 #ifdef BACKLIGHT_ENABLE
     backlight_set(0);
 #endif
@@ -114,6 +116,7 @@ __attribute__((weak)) void suspend_wakeup_init_kb(void) { suspend_wakeup_init_us
  * FIXME: needs doc
  */
 void suspend_wakeup_init(void) {
+    ring_buffer_insert("suspend_wakeup_init()");
     // clear keyboard state
     // need to do it manually, because we're running from ISR
     //  and clear_keyboard() calls print

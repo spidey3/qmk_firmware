@@ -227,6 +227,7 @@ int main(void) {
 #if !defined(NO_USB_STARTUP_CHECK)
         if (USB_DRIVER.state == USB_SUSPENDED) {
             print("[s]");
+            ring_buffer_insert("[s]");
 #    ifdef VISUALIZER_ENABLE
             visualizer_suspend();
 #    endif

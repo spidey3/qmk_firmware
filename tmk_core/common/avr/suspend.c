@@ -9,6 +9,7 @@
 #include "timer.h"
 #include "led.h"
 #include "host.h"
+#include "debug.h"
 
 #ifdef PROTOCOL_LUFA
 #    include "lufa.h"
@@ -74,6 +75,7 @@ static uint8_t wdt_timeout = 0;
  * FIXME: needs doc
  */
 static void power_down(uint8_t wdto) {
+    ring_buffer_insert("power_down()");
 #    ifdef PROTOCOL_LUFA
     if (USB_DeviceState == DEVICE_STATE_Configured) return;
 #    endif
@@ -125,6 +127,7 @@ static void power_down(uint8_t wdto) {
  * FIXME: needs doc
  */
 void suspend_power_down(void) {
+    ring_buffer_insert("suspend_power_down()");
     suspend_power_down_kb();
 
 #ifndef NO_SUSPEND_POWER_DOWN
@@ -161,6 +164,7 @@ __attribute__((weak)) void suspend_wakeup_init_kb(void) { suspend_wakeup_init_us
  * FIXME: needs doc
  */
 void suspend_wakeup_init(void) {
+    ring_buffer_insert("suspend_wakeup_init()");
     // clear keyboard state
     clear_keyboard();
 #ifdef BACKLIGHT_ENABLE

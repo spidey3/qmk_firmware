@@ -387,6 +387,7 @@ void send_joystick_packet(joystick_t *joystick) {
  */
 void EVENT_USB_Device_Connect(void) {
     print("[C]");
+    ring_buffer_insert("[C]");
     /* For battery powered device */
     if (!USB_IsInitialized) {
         USB_Disable();
@@ -401,6 +402,7 @@ void EVENT_USB_Device_Connect(void) {
  */
 void EVENT_USB_Device_Disconnect(void) {
     print("[D]");
+    ring_buffer_insert("[D]");
     /* For battery powered device */
     USB_IsInitialized = false;
     /* TODO: This doesn't work. After several plug in/outs can not be enumerated.
@@ -416,7 +418,10 @@ void EVENT_USB_Device_Disconnect(void) {
  *
  * FIXME: Needs doc
  */
-void EVENT_USB_Device_Reset(void) { print("[R]"); }
+void EVENT_USB_Device_Reset(void) {
+    print("[R]");
+    ring_buffer_insert("[R]");
+}
 
 /** \brief Event USB Device Connect
  *
@@ -424,6 +429,7 @@ void EVENT_USB_Device_Reset(void) { print("[R]"); }
  */
 void EVENT_USB_Device_Suspend() {
     print("[S]");
+    ring_buffer_insert("[S]");
 #ifdef SLEEP_LED_ENABLE
     sleep_led_enable();
 #endif
@@ -435,6 +441,7 @@ void EVENT_USB_Device_Suspend() {
  */
 void EVENT_USB_Device_WakeUp() {
     print("[W]");
+    ring_buffer_insert("[W]");
 #if defined(NO_USB_STARTUP_CHECK)
     suspend_wakeup_init();
 #endif
@@ -1058,6 +1065,7 @@ int main(void) {
 #    endif
     }
     print("USB configured.\n");
+    ring_buffer_insert("USB configured.");
 #else
     USB_USBTask();
 #endif
@@ -1077,10 +1085,12 @@ int main(void) {
 #if !defined(NO_USB_STARTUP_CHECK)
         if (USB_DeviceState == DEVICE_STATE_Suspended) {
             print("[s]");
+            ring_buffer_insert("[s]");
             while (USB_DeviceState == DEVICE_STATE_Suspended) {
                 suspend_power_down();
                 if (USB_Device_RemoteWakeupEnabled && suspend_wakeup_condition()) {
                     USB_Device_SendRemoteWakeup();
+                    ring_buffer_insert("send wakeup");
                     clear_keyboard();
 
 #    if USB_SUSPEND_WAKEUP_DELAY > 0
@@ -1094,6 +1104,7 @@ int main(void) {
 #    endif
                 }
             }
+            ring_buffer_insert("after suspend loop");
             suspend_wakeup_init();
         }
 #endif

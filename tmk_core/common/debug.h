@@ -167,3 +167,15 @@ extern debug_config_t debug_config;
 #    define debug_bin_reverse(data)
 
 #endif /* NO_DEBUG */
+
+#if defined(RING_BUFFER) && !defined(NO_DEBUG)
+void ring_buffer_print(void);
+void ring_buffer_iterator(void (*fun)(const char *));
+void ring_buffer_insert(char *str);
+void ring_buffer_clear(void);
+#else
+#define ring_buffer_print()
+#define ring_buffer_iterator(f)
+#define ring_buffer_insert(s)
+#define ring_buffer_clear()
+#endif
