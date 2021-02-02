@@ -151,6 +151,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 return false;
 #endif
 
+#if defined(RING_BUFFER)
+            case SPI_DRB:
+                ring_buffer_iterator(send_string);
+                ring_buffer_clear();
+                return false;
+#endif
+
                 // clang-format off
 
             case CH_CPNL: host_consumer_send(AL_CONTROL_PANEL); return false;

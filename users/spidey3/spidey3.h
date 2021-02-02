@@ -15,6 +15,7 @@ enum userspace_layers {
 
 enum custom_keycodes {
     SPI_GLO = SAFE_RANGE,
+    SPI_DRB,
     SPI_LNX,  // Mode: Linux
     SPI_OSX,  // Mode: Mac
     SPI_WIN,  // Mode: Windows
