@@ -115,6 +115,7 @@ int main(void) {
             suspended   = false;
             usbSofCount = 0;
             last_timer  = timer_read();
+            suspend_wakeup_init();
 #    ifdef SLEEP_LED_ENABLE
             sleep_led_disable();
 #    endif
@@ -125,6 +126,7 @@ int main(void) {
 #    ifdef SLEEP_LED_ENABLE
                 sleep_led_enable();
 #    endif
+                suspend_power_down();
             }
         }
 #endif
