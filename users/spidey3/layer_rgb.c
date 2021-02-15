@@ -13,27 +13,27 @@ bool     rgb_saved = 0;
 extern bool     spi_gflock;
 extern uint16_t spi_replace_mode;
 
-static void __attribute__((noinline, unused)) rotate_submode(const uint8_t start, const uint8_t end) {
+static void rotate_submode(const uint8_t start, const uint8_t end) {
     if ((start <= rgblight_get_mode()) && (rgblight_get_mode() < end)) {
         rgblight_step();
     } else {
         rgblight_mode(start);
     }
 }
-
-static void set_rgb_default(void) {
-    rgblight_sethsv(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, RGBLIGHT_DEFAULT_VAL);
-    rotate_submode(RGBLIGHT_DEFAULT_MODE, RGBLIGHT_DEFAULT_MODE_end);
-#ifdef VELOCIKEY_ENABLE
-    if (velocikey_enabled()) velocikey_toggle();
-#endif
-}
-
 #ifdef RGBLIGHT_EFFECT_TWINKLE
 static void set_rgb_twinkle(void) {
     rotate_submode(RGBLIGHT_MODE_TWINKLE, RGBLIGHT_MODE_TWINKLE_end);
 }
 #endif
+
+static void set_rgb_default(void) {
+    rgblight_enable();
+    rgblight_sethsv(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, RGBLIGHT_DEFAULT_VAL);
+    rgblight_mode(RGBLIGHT_DEFAULT_MODE);
+#ifdef VELOCIKEY_ENABLE
+    if (velocikey_enabled()) velocikey_toggle();
+#endif
+}
 
 // clang-format off
 
