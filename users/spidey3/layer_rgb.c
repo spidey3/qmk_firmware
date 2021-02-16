@@ -13,19 +13,6 @@ bool     rgb_saved = 0;
 extern bool     spi_gflock;
 extern uint16_t spi_replace_mode;
 
-static void rotate_submode(const uint8_t start, const uint8_t end) {
-    if ((start <= rgblight_get_mode()) && (rgblight_get_mode() < end)) {
-        rgblight_step();
-    } else {
-        rgblight_mode(start);
-    }
-}
-#ifdef RGBLIGHT_EFFECT_TWINKLE
-static void set_rgb_twinkle(void) {
-    rotate_submode(RGBLIGHT_MODE_TWINKLE, RGBLIGHT_MODE_TWINKLE_end);
-}
-#endif
-
 static void set_rgb_default(void) {
     rgblight_enable();
     rgblight_sethsv(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, RGBLIGHT_DEFAULT_VAL);
@@ -404,9 +391,6 @@ bool process_record_user_rgb(uint16_t keycode, keyrecord_t *record) {
         switch (keycode) {
                 // clang-format off
             case SPI_GLO: set_rgb_default(); return false;
-#ifdef RGBLIGHT_EFFECT_TWINKLE
-            case RGB_M_TW: set_rgb_twinkle(); return false;
-#endif
 
             case RGB_HUI: change_timer = timer_read(); change_hue =  1; return false;
             case RGB_HUD: change_timer = timer_read(); change_hue = -1; return false;
