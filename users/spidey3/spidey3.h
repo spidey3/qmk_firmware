@@ -33,7 +33,6 @@ enum custom_keycodes {
 
 #ifdef RGBLIGHT_ENABLE
     SPI_GLO,
-    RGB_MODE_TWINKLE,
 #endif
 };
 
