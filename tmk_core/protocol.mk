@@ -54,5 +54,10 @@ ifeq ($(strip $(XT_ENABLE)), yes)
     OPT_DEFS += -DXT_ENABLE
 endif
 
+ifeq ($(strip $(XT_ENABLE)), yes)
+    SRC += $(PROTOCOL_DIR)/ibmpc.c
+    OPT_DEFS += -DIBMPC_ENABLE
+endif
+
 # Search Path
 VPATH += $(TMK_DIR)/protocol
