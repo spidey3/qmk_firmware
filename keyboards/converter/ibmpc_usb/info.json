@@ -93,7 +93,7 @@
         {"label":".", "x":18, "y":4, "w":2}
       ]
     },
-    "LAYOUT": {
+    "LAYOUT_extended_iso_set1": {
       "layout": [
         {"label":"F13", "x":2, "y":0},
         {"label":"F14", "x":3, "y":0},

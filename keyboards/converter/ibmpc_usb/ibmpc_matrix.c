@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ibmpc.h"
 #include "host.h"
 #include "led.h"
+#include "matrix.h"
 #include "ibmpc_matrix.h"
 #include "timer.h"
 #include "action.h"
@@ -58,6 +59,8 @@ void matrix_init_user(void) {
 __attribute__ ((weak))
 void matrix_scan_user(void) {
 }
+
+void matrix_clear(void);
 
 static int16_t read_wait(uint16_t wait_ms)
 {
@@ -548,22 +551,22 @@ static uint8_t cs1_e0code(uint8_t code) {
 static int8_t process_cs1(uint8_t code)
 {
     static enum {
-        INIT,
-        E0,
+        STATE_INIT,
+        STATE_E0,
         // Pause: E1 1D 45, E1 9D C5 [a]
-        E1,
-        E1_1D,
-        E1_9D,
-    } state = INIT;
+        STATE_E1,
+        STATE_E1_1D,
+        STATE_E1_9D,
+    } state = STATE_INIT;
 
     switch (state) {
-        case INIT:
+        case STATE_INIT:
             switch (code) {
                 case 0xE0:
-                    state = E0;
+                    state = STATE_E0;
                     break;
                 case 0xE1:
-                    state = E1;
+                    state = STATE_E1;
                     break;
                 default:
                     if (code < 0x80)
@@ -573,61 +576,61 @@ static int8_t process_cs1(uint8_t code)
                     break;
             }
             break;
-        case E0:
+        case STATE_E0:
             switch (code) {
                 case 0x2A:
                 case 0xAA:
                 case 0x36:
                 case 0xB6:
                     //ignore fake shift
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 default:
                     if (code < 0x80)
                         matrix_make(cs1_e0code(code));
                     else
                         matrix_break(cs1_e0code(code & 0x7F));
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
             }
             break;
-        case E1:
+        case STATE_E1:
             switch (code) {
                 case 0x1D:
-                    state = E1_1D;
+                    state = STATE_E1_1D;
                     break;
                 case 0x9D:
-                    state = E1_9D;
+                    state = STATE_E1_9D;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
             }
             break;
-        case E1_1D:
+        case STATE_E1_1D:
             switch (code) {
                 case 0x45:
                     matrix_make(0x55); // Pause
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
             }
             break;
-        case E1_9D:
+        case STATE_E1_9D:
             switch (code) {
                 case 0xC5:
                     matrix_break(0x55); // Pause
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
             }
             break;
         default:
-            state = INIT;
+            state = STATE_INIT;
     }
     return 0;
 }
@@ -758,43 +761,43 @@ static int8_t process_cs2(uint8_t code)
 {
     // scan code reading states
     static enum {
-        INIT,
-        F0,
-        E0,
-        E0_F0,
+        STATE_INIT,
+        STATE_F0,
+        STATE_E0,
+        STATE_E0_F0,
         // Pause
-        E1,
-        E1_14,
-        E1_F0,
-        E1_F0_14,
-        E1_F0_14_F0,
-    } state = INIT;
+        STATE_E1,
+        STATE_E1_14,
+        STATE_E1_F0,
+        STATE_E1_F0_14,
+        STATE_E1_F0_14_F0,
+    } state = STATE_INIT;
 
     switch (state) {
-        case INIT:
+        case STATE_INIT:
             switch (code) {
                 case 0xE0:
-                    state = E0;
+                    state = STATE_E0;
                     break;
                 case 0xF0:
-                    state = F0;
+                    state = STATE_F0;
                     break;
                 case 0xE1:
-                    state = E1;
+                    state = STATE_E1;
                     break;
                 case 0x83:  // F7
                     matrix_make(0x02);
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 case 0x84:  // Alt'd PrintScreen
                     matrix_make(0x7F);
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 case 0xAA:  // Self-test passed
                 case 0xFC:  // Self-test failed
                     // replug or unstable connection probably
                 default:    // normal key make
-                    state = INIT;
+                    state = STATE_INIT;
                     if (code < 0x80) {
                         matrix_make(code);
                     } else {
@@ -804,17 +807,17 @@ static int8_t process_cs2(uint8_t code)
                     }
             }
             break;
-        case E0:    // E0-Prefixed
+        case STATE_E0:    // E0-Prefixed
             switch (code) {
                 case 0x12:  // to be ignored
                 case 0x59:  // to be ignored
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 case 0xF0:
-                    state = E0_F0;
+                    state = STATE_E0_F0;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
                     if (code < 0x80) {
                         matrix_make(cs2_e0code(code));
                     } else {
@@ -824,18 +827,18 @@ static int8_t process_cs2(uint8_t code)
                     }
             }
             break;
-        case F0:    // Break code
+        case STATE_F0:    // Break code
             switch (code) {
                 case 0x83:  // F7
                     matrix_break(0x02);
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 case 0x84:  // Alt'd PrintScreen
                     matrix_break(0x7F);
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
                     if (code < 0x80) {
                         matrix_break(code);
                     } else {
@@ -845,14 +848,14 @@ static int8_t process_cs2(uint8_t code)
                     }
             }
             break;
-        case E0_F0: // Break code of E0-prefixed
+        case STATE_E0_F0: // Break code of E0-prefixed
             switch (code) {
                 case 0x12:  // to be ignored
                 case 0x59:  // to be ignored
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
                     if (code < 0x80) {
                         matrix_break(cs2_e0code(code));
                     } else {
@@ -863,59 +866,59 @@ static int8_t process_cs2(uint8_t code)
             }
             break;
         // Pause make: E1 14 77
-        case E1:
+        case STATE_E1:
             switch (code) {
                 case 0x14:
-                    state = E1_14;
+                    state = STATE_E1_14;
                     break;
                 case 0xF0:
-                    state = E1_F0;
+                    state = STATE_E1_F0;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
             }
             break;
-        case E1_14:
+        case STATE_E1_14:
             switch (code) {
                 case 0x77:
                     matrix_make(0x00);
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
             }
             break;
         // Pause break: E1 F0 14 F0 77
-        case E1_F0:
+        case STATE_E1_F0:
             switch (code) {
                 case 0x14:
-                    state = E1_F0_14;
+                    state = STATE_E1_F0_14;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
             }
             break;
-        case E1_F0_14:
+        case STATE_E1_F0_14:
             switch (code) {
                 case 0xF0:
-                    state = E1_F0_14_F0;
+                    state = STATE_E1_F0_14_F0;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
             }
             break;
-        case E1_F0_14_F0:
+        case STATE_E1_F0_14_F0:
             switch (code) {
                 case 0x77:
                     matrix_break(0x00);
-                    state = INIT;
+                    state = STATE_INIT;
                     break;
                 default:
-                    state = INIT;
+                    state = STATE_INIT;
             }
             break;
         default:
-            state = INIT;
+            state = STATE_INIT;
     }
     return 0;
 }
@@ -929,20 +932,20 @@ static int8_t process_cs2(uint8_t code)
 static int8_t process_cs3(uint8_t code)
 {
     static enum {
-        READY,
-        F0,
+        STATE_READY,
+        STATE_F0,
 #ifdef G80_2551_SUPPORT
         // G80-2551 four extra keys around cursor keys
-        G80,
-        G80_F0,
+        STATE_G80,
+        STATE_G80_F0,
 #endif
-    } state = READY;
+    } state = STATE_READY;
 
     switch (state) {
-        case READY:
+        case STATE_READY:
             switch (code) {
                 case 0xF0:
-                    state = F0;
+                    state = STATE_F0;
                     break;
                 case 0x83:  // PrintScreen
                     matrix_make(0x02);
@@ -970,7 +973,7 @@ static int8_t process_cs3(uint8_t code)
                     break;
 #ifdef G80_2551_SUPPORT
                 case 0x80:  // G80-2551 four extra keys around cursor keys
-                    state = G80;
+                    state = STATE_G80;
                     break;
 #endif
                 default:    // normal key make
@@ -982,42 +985,42 @@ static int8_t process_cs3(uint8_t code)
                     }
             }
             break;
-        case F0:    // Break code
+        case STATE_F0:    // Break code
             switch (code) {
                 case 0x83:  // PrintScreen
                     matrix_break(0x02);
-                    state = READY;
+                    state = STATE_READY;
                     break;
                 case 0x84:  // Keypad *
                     matrix_break(0x7F);
-                    state = READY;
+                    state = STATE_READY;
                     break;
                 case 0x85:  // Muhenkan
                     matrix_break(0x0B);
-                    state = READY;
+                    state = STATE_READY;
                     break;
                 case 0x86:  // Henkan
                     matrix_break(0x06);
-                    state = READY;
+                    state = STATE_READY;
                     break;
                 case 0x87:  // Hiragana
                     matrix_break(0x00);
-                    state = READY;
+                    state = STATE_READY;
                     break;
                 case 0x8B:  // Left GUI
                     matrix_break(0x01);
-                    state = READY;
+                    state = STATE_READY;
                     break;
                 case 0x8C:  // Right GUI
                     matrix_break(0x09);
-                    state = READY;
+                    state = STATE_READY;
                     break;
                 case 0x8D:  // Application
                     matrix_break(0x0A);
-                    state = READY;
+                    state = STATE_READY;
                     break;
                 default:
-                    state = READY;
+                    state = STATE_READY;
                     if (code < 0x80) {
                         matrix_break(code);
                     } else {
@@ -1032,7 +1035,7 @@ static int8_t process_cs3(uint8_t code)
          * https://deskthority.net/wiki/Cherry_G80-2551
          * https://github.com/tmk/tmk_keyboard/wiki/IBM-PC-AT-Keyboard-Protocol#g80-2551-in-code-set-3
          */
-        case G80:   // G80-2551 four extra keys around cursor keys
+        case STATE_G80:   // G80-2551 four extra keys around cursor keys
             switch (code) {
                 case (0x26):    // TD= -> JYEN
                     matrix_make(0x5D);
@@ -1047,16 +1050,16 @@ static int8_t process_cs3(uint8_t code)
                     matrix_make(0x00);
                     break;
                 case (0xF0):
-                    state = G80_F0;
+                    state = STATE_G80_F0;
                     return 0;
                 default:
                     // Not supported
                     matrix_clear();
                     break;
             }
-            state = READY;
+            state = STATE_READY;
             break;
-        case G80_F0:
+        case STATE_G80_F0:
             switch (code) {
                 case (0x26):    // TD= -> JYEN
                     matrix_break(0x5D);
@@ -1075,11 +1078,33 @@ static int8_t process_cs3(uint8_t code)
                     matrix_clear();
                     break;
             }
-            state = READY;
+            state = STATE_READY;
             break;
 #endif
     }
     return 0;
+}
+
+#if (MATRIX_COLS <= 8)
+#    define print_matrix_header()  print("\nr/c 01234567\n")
+#    define print_matrix_row(row)  print_bin_reverse8(matrix_get_row(row))
+#elif (MATRIX_COLS <= 16)
+#    define print_matrix_header()  print("\nr/c 0123456789ABCDEF\n")
+#    define print_matrix_row(row)  print_bin_reverse16(matrix_get_row(row))
+#elif (MATRIX_COLS <= 32)
+#    define print_matrix_header()  print("\nr/c 0123456789ABCDEF0123456789ABCDEF\n")
+#    define print_matrix_row(row)  print_bin_reverse32(matrix_get_row(row))
+#endif
+
+void matrix_print(void)
+{
+    print_matrix_header();
+
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        print_hex8(row); print(": ");
+        print_matrix_row(row);
+        print("\n");
+    }
 }
 
 /*
