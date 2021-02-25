@@ -111,6 +111,9 @@ void hook_early_init(void)
 void matrix_init(void)
 {
     debug_enable = true;
+    debug_keyboard = true;
+    debug_matrix = true;
+    eeconfig_update_debug(debug_config.raw);
 
     // initialize matrix state: all keys off
     for (uint8_t i=0; i < MATRIX_ROWS; i++) matrix[i] = 0x00;
@@ -189,6 +192,7 @@ uint8_t matrix_scan(void)
 
     switch (state) {
         case INIT:
+            xprintf("INIT\n");
             ibmpc_host_disable();
 
             xprintf("I%u ", timer_read());
@@ -200,6 +204,7 @@ uint8_t matrix_scan(void)
             clear_keyboard();
 
             init_time = timer_read();
+            xprintf("WAIT_SETTLE\n");
             state = WAIT_SETTLE;
             break;
         case WAIT_SETTLE:
@@ -209,6 +214,7 @@ uint8_t matrix_scan(void)
             }
             break;
         case AT_RESET:
+            xprintf("AT_RESET\n");
             ibmpc_host_isr_clear();
             ibmpc_host_enable();
             wait_ms(1); // keyboard can't respond to command without this
@@ -219,6 +225,7 @@ uint8_t matrix_scan(void)
 
             // reset command
             if (0xFA == ibmpc_host_send(0xFF)) {
+                xprintf("WAIT_AA\n");
                 state = WAIT_AA;
             } else {
                 state = XT_RESET;
@@ -226,6 +233,7 @@ uint8_t matrix_scan(void)
             xprintf("A%u ", timer_read());
             break;
         case XT_RESET:
+            xprintf("XT_RESET\n");
             // Reset XT-initialize keyboard
             // XT: hard reset 500ms for IBM XT Type-1 keyboard and clones
             // XT: soft reset 20ms min
@@ -234,6 +242,7 @@ uint8_t matrix_scan(void)
             IBMPC_RST_LO();         // hard reset: Reset pin Lo
 
             init_time = timer_read();
+            xprintf("XT_RESET_WAIT\n");
             state = XT_RESET_WAIT;
             break;
         case XT_RESET_WAIT:
@@ -242,12 +251,14 @@ uint8_t matrix_scan(void)
             }
             break;
         case XT_RESET_DONE:
+            xprintf("XT_RESET_DONE\n");
             IBMPC_RST_HIZ();        // hard reset: Reset pin HiZ
             ibmpc_host_isr_clear();
             ibmpc_host_enable();    // soft reset: idle(Clock Hi/Data Hi)
 
             xprintf("X%u ", timer_read());
             init_time = timer_read();
+            xprintf("WAIT_AA\n");
             state = WAIT_AA;
             break;
         case WAIT_AA:
@@ -266,6 +277,7 @@ uint8_t matrix_scan(void)
             if (ibmpc_host_recv() != -1) {  // wait for AA
                 xprintf("W%u ", timer_read());
                 init_time = timer_read();
+                xprintf("WAIT_AABF\n");
                 state = WAIT_AABF;
             }
             break;
@@ -282,6 +294,7 @@ uint8_t matrix_scan(void)
             }
             break;
         case WAIT_AABFBF:
+            xprintf("WAIT_AABFBF\n");
             if (timer_elapsed(init_time) > 500) {
                 state = READ_ID;
             }
@@ -291,6 +304,7 @@ uint8_t matrix_scan(void)
             }
             break;
         case READ_ID:
+            xprintf("READ_ID\n");
             keyboard_id = read_keyboard_id();
             xprintf("R%u ", timer_read());
 
@@ -337,6 +351,7 @@ uint8_t matrix_scan(void)
             state = SETUP;
             break;
         case SETUP:
+            xprintf("SETUP\n");
             xprintf("S%u ", timer_read());
             switch (keyboard_kind) {
                 case PC_XT:
@@ -356,6 +371,7 @@ uint8_t matrix_scan(void)
                 default:
                     break;
             }
+            xprintf("LOOP\n");
             state = LOOP;
             xprintf("L%u ", timer_read());
         case LOOP:
@@ -365,6 +381,8 @@ uint8_t matrix_scan(void)
                     // no code
                     break;
                 }
+
+                xprintf("\nRECV=%03X ", code);
 
                 // Keyboard Error/Overrun([3]p.26) or Buffer full
                 // Scan Code Set 1: 0xFF
@@ -381,13 +399,16 @@ uint8_t matrix_scan(void)
 
                 switch (keyboard_kind) {
                     case PC_XT:
+                        xprintf("p_cs1 ");
                         if (process_cs1(code) == -1) state = INIT;
                         break;
                     case PC_AT:
                     case PC_AT_Z150:
+                        xprintf("p_cs2 ");
                         if (process_cs2(code) == -1) state = INIT;
                         break;
                     case PC_TERMINAL:
+                        xprintf("p_cs3 ");
                         if (process_cs3(code) == -1) state = INIT;
                         break;
                     default:
