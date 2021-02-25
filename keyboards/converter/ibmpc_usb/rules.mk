@@ -23,7 +23,7 @@ NKRO_ENABLE      = yes  # USB Nkey Rollover
 IBMPC_ENABLE     = yes
 
 CUSTOM_MATRIX    = yes
-SRC += ibmpc_matrix.c
+SRC += matrix.c
 
 # Optimize size but this may cause error "relocation truncated to fit"
 #EXTRALDFLAGS = -Wl,--relax
