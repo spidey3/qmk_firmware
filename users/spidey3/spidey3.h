@@ -33,13 +33,10 @@ enum custom_keycodes {
 
 #ifdef RGBLIGHT_ENABLE
     SPI_GLO,
-    RGB_MODE_TWINKLE,
 #endif
 };
 
 #ifdef RGBLIGHT_ENABLE
-
-#    define RGB_M_TW RGB_MODE_TWINKLE
 
 enum layer_base {
     LAYER_BASE_DEFAULT = _BASE,
