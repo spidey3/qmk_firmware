@@ -110,27 +110,34 @@ GREP ?= grep
 
 
 define EXEC_DFU
+	echo "DFU: Start flashing sequence" ;\
 	if [ "$(1)" ]; then \
 		echo "Flashing '$(1)' for EE_HANDS split keyboard support." ;\
 	fi; \
+	echo "DFU: Looking for bootloader..." ;\
 	until $(DFU_PROGRAMMER) $(MCU) get bootloader-version; do\
 		printf "$(MSG_BOOTLOADER_NOT_FOUND)" ;\
 		sleep 5 ;\
 	done; \
+	echo "DFU: Found bootloader. Erasing..." ;\
 	if $(DFU_PROGRAMMER) --version 2>&1 | $(GREP) -q 0.7 ; then\
 		$(DFU_PROGRAMMER) $(MCU) erase --force; \
+	    echo "DFU: Flashing..." ;\
 		if [ "$(1)" ]; then \
 			$(DFU_PROGRAMMER) $(MCU) flash --force --eeprom $(QUANTUM_PATH)/split_common/$(1);\
 		fi; \
 		$(DFU_PROGRAMMER) $(MCU) flash --force $(BUILD_DIR)/$(TARGET).hex;\
 	else \
 		$(DFU_PROGRAMMER) $(MCU) erase; \
+	    echo "DFU: Flashing..." ;\
 		if [ "$(1)" ]; then \
 			$(DFU_PROGRAMMER) $(MCU) flash-eeprom $(QUANTUM_PATH)/split_common/$(1);\
 		fi; \
 		$(DFU_PROGRAMMER) $(MCU) flash $(BUILD_DIR)/$(TARGET).hex;\
 	fi; \
-	$(DFU_PROGRAMMER) $(MCU) reset
+	echo "DFU: Resetting..." ;\
+	$(DFU_PROGRAMMER) $(MCU) reset ;\
+	echo "DFU: Done!"
 endef
 
 dfu: $(BUILD_DIR)/$(TARGET).hex cpfirmware check-size
