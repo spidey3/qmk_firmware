@@ -35,8 +35,15 @@
 #endif
 
 #define UNICODE_SELECTED_MODES UC_MAC, UC_LNX, UC_WINC
+#define UNICODE_TYPE_DELAY 5
 
 #define SPI_DEBUG_SCAN_RATE
 
 #undef MANUFACTURER
 #define MANUFACTURER Window of Fire
+
+// Some keyboards enable BACKLIGHT_CAPS_LOCK without checking if backlight is enabled.
+// Undef as appropriate to avoid compiler warnings in that case.
+#ifndef BACKLIGHT_ENABLE
+#undef BACKLIGHT_CAPS_LOCK
+#endif
