@@ -376,11 +376,6 @@ endif
 # Disable features that a keyboard doesn't support
 -include $(BUILDDEFS_PATH)/disable_features.mk
 
-# Pull in user leve post_rules.mk if present
-ifneq ("$(wildcard $(USER_PATH)/post_rules.mk)","")
-    include $(USER_PATH)/post_rules.mk
-endif
-
 # Pull in post_rules.mk files from all our subfolders
 ifneq ("$(wildcard $(KEYBOARD_PATH_1)/post_rules.mk)","")
     include $(KEYBOARD_PATH_1)/post_rules.mk
@@ -396,6 +391,11 @@ ifneq ("$(wildcard $(KEYBOARD_PATH_4)/post_rules.mk)","")
 endif
 ifneq ("$(wildcard $(KEYBOARD_PATH_5)/post_rules.mk)","")
     include $(KEYBOARD_PATH_5)/post_rules.mk
+endif
+
+# Pull in user level post_rules.mk if present
+ifneq ("$(wildcard $(USER_PATH)/post_rules.mk)","")
+    include $(USER_PATH)/post_rules.mk
 endif
 
 ifneq ("$(wildcard $(KEYMAP_PATH)/config.h)","")
