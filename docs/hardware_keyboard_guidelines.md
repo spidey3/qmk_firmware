@@ -138,18 +138,19 @@ The presence of this file means that the folder is a keyboard target and can be 
 
 The `rules.mk` file can also be placed in a sub-folder, and its reading order is as follows:
 
+* `users/a_user_folder/rules.mk`
 * `keyboards/top_folder/rules.mk`
   * `keyboards/top_folder/sub_1/rules.mk`
     * `keyboards/top_folder/sub_1/sub_2/rules.mk`
       * `keyboards/top_folder/sub_1/sub_2/sub_3/rules.mk`
         * `keyboards/top_folder/sub_1/sub_2/sub_3/sub_4/rules.mk`
           * `keyboards/top_folder/keymaps/a_keymap/rules.mk`
-          * `users/a_user_folder/rules.mk`
         * `keyboards/top_folder/sub_1/sub_2/sub_3/sub_4/post_rules.mk`
       * `keyboards/top_folder/sub_1/sub_2/sub_3/post_rules.mk`
     * `keyboards/top_folder/sub_1/sub_2/post_rules.mk`
   * `keyboards/top_folder/sub_1/post_rules.mk`
 * `keyboards/top_folder/post_rules.mk`
+* `users/a_user_folder/post_rules.mk`
 * `common_features.mk`
 
 Many of the settings written in the `rules.mk` file are interpreted by `common_features.mk`, which sets the necessary source files and compiler options.
