@@ -380,3 +380,11 @@ bool led_update_user(led_t led_state) {
     return true;
 #endif
 }
+
+#if defined(UNICODE_COMMON_ENABLE)
+void unicode_input_mode_set_user(uint8_t input_mode) {
+#    ifdef RGBLIGHT_ENABLE
+    unicode_input_mode_set_user_rgb(input_mode);
+#    endif
+}
+#endif
