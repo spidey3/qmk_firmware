@@ -208,8 +208,9 @@ void register_hex(uint16_t hex) {
 
 void register_hex32(uint32_t hex) {
     bool onzerostart = true;
+    int onzerodigits = ((unicode_config.input_mode == UC_WINC) ? 4 : 3);
     for (int i = 7; i >= 0; i--) {
-        if (i <= 3) {
+        if (i <= onzerodigits) {
             onzerostart = false;
         }
         uint8_t digit = ((hex >> (i * 4)) & 0xF);
