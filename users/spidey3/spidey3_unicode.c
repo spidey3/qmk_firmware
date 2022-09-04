@@ -20,6 +20,23 @@ const uint32_t PROGMEM unicode_map[] = {
     [THUMBDN]  = 0x1F44E,  // 👎
     [LOL]      = 0x1F602,  // 😂
     [SURPRISE] = 0x1F62E,  // 😮
+    [T_A1]     = 0xA1,     // FOR TESTING
+    [T_E1]     = 0xE1,     // FOR TESTING
+    [T_A12]    = 0xA12,    // FOR TESTING
+    [T_E12]    = 0xE12,    // FOR TESTING
+    [T_A123]   = 0xA123,   // FOR TESTING
+    [T_A103]   = 0xA103,   // FOR TESTING
+    [T_E123]   = 0xE123,   // FOR TESTING
+    [T_A1234]  = 0xA1234,  // FOR TESTING
+    [T_A1034]  = 0xA1034,  // FOR TESTING
+    [T_E1234]  = 0xE1234,  // FOR TESTING
+    [T_12]     = 0x12,     // FOR TESTING
+    [T_103]    = 0x103,    // FOR TESTING
+    [T_123]    = 0x123,    // FOR TESTING
+    [T_1234]   = 0x1234,   // FOR TESTING
+    [T_1034]   = 0x1034,   // FOR TESTING
+    [T_12345]  = 0x12345,  // FOR TESTING
+    [T_103456] = 0x103456, // FOR TESTING
 };
 
 void eeconfig_init_user_unicode(void) {
