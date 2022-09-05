@@ -7,23 +7,22 @@
 #include "velocikey.h"
 #include <lib/lib8tion/lib8tion.h>
 
-uint32_t rgb_mode;
-uint16_t rgb_hue;
-uint8_t  rgb_sat;
-uint8_t  rgb_val;
-bool     rgb_saved = 0;
-
 extern bool     spi_gflock;
 extern uint16_t spi_replace_mode;
 
+#if 0
 static void set_rgb_default(void) {
     rgblight_enable();
     rgblight_sethsv(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, RGBLIGHT_DEFAULT_VAL);
     rgblight_mode(RGBLIGHT_DEFAULT_MODE);
-#ifdef VELOCIKEY_ENABLE
+#    ifdef VELOCIKEY_ENABLE
     if (velocikey_enabled()) velocikey_toggle();
-#endif
+#    endif
 }
+#else
+#    define set_rgb_default() \
+        {}
+#endif
 
 // clang-format off
 
@@ -133,8 +132,7 @@ int8_t change_sat = 0;
 int8_t change_val = 0;
 
 // timer to control color change speed
-uint16_t       change_timer = 0;
-const uint16_t change_tick  = 15;
+const uint16_t change_tick = 15;
 
 extern rgblight_config_t rgblight_config;
 extern rgblight_status_t rgblight_status;
@@ -147,13 +145,10 @@ extern rgblight_status_t rgblight_status;
 #    define STARTUP_ANIMATION_CYCLE_STEP 2
 #    define STARTUP_ANIMATION_RAMP_TO_STEPS 70
 #    define STARTUP_ANIMATION_STEP_TIME 10
-#    define STARTUP_ANIMATION_INITIAL_DELAY 0 // milliseconds, must be < 255 * STEP_TIME
+#    define STARTUP_ANIMATION_INITIAL_DELAY 5 // milliseconds, must be > 0 and < 255 * STEP_TIME
 
 // clang-format off
 typedef enum {
-    DISABLED,
-    WAITING,
-    RESTART,
     START,
     FADE_OLD,
     FADE_IN,
@@ -167,14 +162,148 @@ typedef enum {
 
 static rgblight_config_t         old_config;
 static uint8_t                   old_base_mode;
-static startup_animation_state_t startup_animation_state = DISABLED;
-static uint16_t                  rgblight_startup_loop_timer;
+static startup_animation_state_t startup_animation_state = START;
+
+uint32_t startup_animation_cb(uint32_t trigger_time, void *cb_arg) {
+    static uint8_t counter;
+
+    switch (startup_animation_state) {
+        case START:
+#    ifdef STARTUP_ANIMATION_DEBUG
+            dprintln("sua START");
+#    endif
+            startup_animation_state = FADE_OLD;
+            counter                 = old_config.val;
+            // No break! Just roll into FADE_OLD in the same iteration...
+
+        case FADE_OLD:
+#    ifdef STARTUP_ANIMATION_DEBUG
+            dprintf("sua FADE_OLD counter=%u\n", counter);
+#    endif
+            if (counter >= STARTUP_ANIMATION_FADE_STEP) {
+                rgblight_sethsv_noeeprom(old_config.hue, old_config.sat, counter);
+                counter -= STARTUP_ANIMATION_FADE_STEP;
+            } else {
+                counter                 = 0;
+                startup_animation_state = FADE_IN;
+                rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+            }
+            break;
+
+        case FADE_IN:
+#    ifdef STARTUP_ANIMATION_DEBUG
+            dprintf("sua FADE_IN counter=%u\n", counter);
+#    endif
+            if (counter < STARTUP_ANIMATION_VALUE) {
+                rgblight_sethsv_noeeprom(old_config.hue, STARTUP_ANIMATION_SATURATION, counter);
+                counter += STARTUP_ANIMATION_FADE_STEP;
+            } else {
+                counter                 = 255;
+                startup_animation_state = CYCLE;
+            }
+            break;
+
+        case CYCLE:
+#    ifdef STARTUP_ANIMATION_DEBUG
+            dprintf("sua CYCLE counter=%u\n", counter);
+#    endif
+            if (counter >= STARTUP_ANIMATION_CYCLE_STEP) {
+                rgblight_sethsv_noeeprom((counter + old_config.hue) % 255, STARTUP_ANIMATION_SATURATION, STARTUP_ANIMATION_VALUE);
+                counter -= STARTUP_ANIMATION_CYCLE_STEP;
+            } else {
+                if (
+#    ifdef RGBLIGHT_EFFECT_BREATHING
+                    (old_base_mode == RGBLIGHT_MODE_BREATHING) ||
+#    endif
+#    ifdef RGBLIGHT_EFFECT_SNAKE
+                    (old_base_mode == RGBLIGHT_MODE_SNAKE) ||
+#    endif
+#    ifdef RGBLIGHT_EFFECT_KNIGHT
+                    (old_base_mode == RGBLIGHT_MODE_KNIGHT) ||
+#    endif
+#    ifdef RGBLIGHT_EFFECT_TWINKLE
+                    (old_base_mode == RGBLIGHT_MODE_TWINKLE) ||
+#    endif
+                    !old_config.enable) {
+                    counter                 = STARTUP_ANIMATION_VALUE;
+                    startup_animation_state = RAMP_DOWN;
+                } else if (
+#    ifdef RGBLIGHT_EFFECT_STATIC_GRADIENT
+                    (old_base_mode == RGBLIGHT_MODE_STATIC_GRADIENT) ||
+#    endif
+#    ifdef RGBLIGHT_EFFECT_RAINBOW_MOOD
+                    (old_base_mode == RGBLIGHT_MODE_RAINBOW_MOOD) ||
+#    endif
+#    ifdef RGBLIGHT_EFFECT_RAINBOW_SWIRL
+                    (old_base_mode == RGBLIGHT_MODE_RAINBOW_SWIRL) ||
+#    endif
+#    ifdef RGBLIGHT_EFFECT_RAINBOW_CHRISTMAS
+                    (old_base_mode == RGBLIGHT_MODE_CHRISTMAS) ||
+#    endif
+#    ifdef RGBLIGHT_EFFECT_RAINBOW_RGB_TEST
+                    (old_base_mode == RGBLIGHT_MODE_RGB_TEST) ||
+#    endif
+                    (old_base_mode == RGBLIGHT_MODE_STATIC_LIGHT)) {
+                    counter                 = 0;
+                    startup_animation_state = RAMP_TO;
+                } else {
+                    startup_animation_state = CLEAN_UP;
+                }
+            }
+            break;
+
+        case RAMP_DOWN:
+#    ifdef STARTUP_ANIMATION_DEBUG
+            dprintf("sua RAMP_DOWN counter=%u\n", counter);
+#    endif
+            rgblight_sethsv_noeeprom(old_config.hue, STARTUP_ANIMATION_SATURATION, counter);
+            if (counter >= STARTUP_ANIMATION_FADE_STEP) {
+                counter -= STARTUP_ANIMATION_FADE_STEP;
+            } else {
+                startup_animation_state = CLEAN_UP;
+            }
+            break;
+
+        case RAMP_TO: {
+#    ifdef STARTUP_ANIMATION_DEBUG
+            dprintf("sua RAMP_TO s=%u, v=%u, counter=%u\n", old_config.sat, old_config.val, counter);
+#    endif
+            uint8_t steps = STARTUP_ANIMATION_RAMP_TO_STEPS;
+            if (counter < steps) {
+                uint8_t s = STARTUP_ANIMATION_SATURATION + counter * (((float)old_config.sat - STARTUP_ANIMATION_SATURATION) / (float)steps);
+                uint8_t v = STARTUP_ANIMATION_VALUE + counter * (((float)old_config.val - STARTUP_ANIMATION_VALUE) / (float)steps);
+                rgblight_sethsv_noeeprom(old_config.hue, s, v);
+                counter++;
+            } else {
+                startup_animation_state = CLEAN_UP;
+            }
+        } break;
+
+        case CLEAN_UP:
+#    ifdef STARTUP_ANIMATION_DEBUG
+            dprintln("sua CLEAN_UP");
+#    endif
+            rgblight_reload_from_eeprom();
+            startup_animation_state = DONE;
+#    ifdef STARTUP_ANIMATION_DEBUG
+            dprintln("sua DONE");
+#    endif
+            return 0; // no repeat
+
+        default:
+            break;
+    }
+
+    return STARTUP_ANIMATION_STEP_TIME;
+}
 
 void startup_animation_init(void) {
-    old_config.raw = rgblight_config.raw;
-    old_base_mode  = rgblight_status.base_mode;
-
-    if (!old_config.enable) rgblight_enable_noeeprom();
+    if (is_keyboard_master()) {
+        old_config.raw = rgblight_config.raw;
+        old_base_mode  = rgblight_status.base_mode;
+        if (!old_config.enable) rgblight_enable_noeeprom();
+        defer_exec(STARTUP_ANIMATION_INITIAL_DELAY, startup_animation_cb, NULL);
+    }
 }
 #endif
 
@@ -182,176 +311,28 @@ void keyboard_post_init_user_rgb(void) {
     // Enable the LED layers
     rgblight_layers = _rgb_layers;
     do_rgb_all();
-
 #if defined(RGBLIGHT_STARTUP_ANIMATION)
     startup_animation_init();
-    startup_animation_state = STARTUP_ANIMATION_INITIAL_DELAY ? WAITING : START;
 #endif
 }
 
-void matrix_scan_user_rgb(void) {
-#if defined(RGBLIGHT_STARTUP_ANIMATION)
-    if (startup_animation_state != DONE && is_keyboard_master()) {
-        if (startup_animation_state == START || timer_elapsed(rgblight_startup_loop_timer) > STARTUP_ANIMATION_STEP_TIME) {
-            static uint8_t counter;
-            rgblight_startup_loop_timer = timer_read();
-
-            switch (startup_animation_state) {
-                case WAITING:
-#    ifdef STARTUP_ANIMATION_DEBUG
-                    dprintf("sua WAITING counter=%u\n", counter);
-#    endif
-                    if (counter < STARTUP_ANIMATION_INITIAL_DELAY / STARTUP_ANIMATION_STEP_TIME) {
-                        counter++;
-                    } else {
-                        startup_animation_state = START;
-                    }
-                    break;
-
-                case RESTART:
-#    ifdef STARTUP_ANIMATION_DEBUG
-                    dprintln("sua RESTART");
-#    endif
-                    startup_animation_init();
-                case START:
-#    ifdef STARTUP_ANIMATION_DEBUG
-                    dprintln("sua START");
-#    endif
-                    startup_animation_state = FADE_OLD;
-                    counter                 = old_config.val;
-                    // No break! Just roll into FADE_OLD in the same iteration...
-
-                case FADE_OLD:
-#    ifdef STARTUP_ANIMATION_DEBUG
-                    dprintf("sua FADE_OLD counter=%u\n", counter);
-#    endif
-                    if (counter >= STARTUP_ANIMATION_FADE_STEP) {
-                        rgblight_sethsv_noeeprom(old_config.hue, old_config.sat, counter);
-                        counter -= STARTUP_ANIMATION_FADE_STEP;
-                    } else {
-                        counter                 = 0;
-                        startup_animation_state = FADE_IN;
-                        rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
-                    }
-                    break;
-
-                case FADE_IN:
-#    ifdef STARTUP_ANIMATION_DEBUG
-                    dprintf("sua FADE_IN counter=%u\n", counter);
-#    endif
-                    if (counter < STARTUP_ANIMATION_VALUE) {
-                        rgblight_sethsv_noeeprom(old_config.hue, STARTUP_ANIMATION_SATURATION, counter);
-                        counter += STARTUP_ANIMATION_FADE_STEP;
-                    } else {
-                        counter                 = 255;
-                        startup_animation_state = CYCLE;
-                    }
-                    break;
-
-                case CYCLE:
-#    ifdef STARTUP_ANIMATION_DEBUG
-                    dprintf("sua CYCLE counter=%u\n", counter);
-#    endif
-                    if (counter >= STARTUP_ANIMATION_CYCLE_STEP) {
-                        rgblight_sethsv_noeeprom((counter + old_config.hue) % 255, STARTUP_ANIMATION_SATURATION, STARTUP_ANIMATION_VALUE);
-                        counter -= STARTUP_ANIMATION_CYCLE_STEP;
-                    } else {
-                        if (
-#    ifdef RGBLIGHT_EFFECT_BREATHING
-                            (old_base_mode == RGBLIGHT_MODE_BREATHING) ||
-#    endif
-#    ifdef RGBLIGHT_EFFECT_SNAKE
-                            (old_base_mode == RGBLIGHT_MODE_SNAKE) ||
-#    endif
-#    ifdef RGBLIGHT_EFFECT_KNIGHT
-                            (old_base_mode == RGBLIGHT_MODE_KNIGHT) ||
-#    endif
-#    ifdef RGBLIGHT_EFFECT_TWINKLE
-                            (old_base_mode == RGBLIGHT_MODE_TWINKLE) ||
-#    endif
-                            !old_config.enable) {
-                            counter                 = STARTUP_ANIMATION_VALUE;
-                            startup_animation_state = RAMP_DOWN;
-                        } else if (
-#    ifdef RGBLIGHT_EFFECT_STATIC_GRADIENT
-                            (old_base_mode == RGBLIGHT_MODE_STATIC_GRADIENT) ||
-#    endif
-#    ifdef RGBLIGHT_EFFECT_RAINBOW_MOOD
-                            (old_base_mode == RGBLIGHT_MODE_RAINBOW_MOOD) ||
-#    endif
-#    ifdef RGBLIGHT_EFFECT_RAINBOW_SWIRL
-                            (old_base_mode == RGBLIGHT_MODE_RAINBOW_SWIRL) ||
-#    endif
-#    ifdef RGBLIGHT_EFFECT_RAINBOW_CHRISTMAS
-                            (old_base_mode == RGBLIGHT_MODE_CHRISTMAS) ||
-#    endif
-#    ifdef RGBLIGHT_EFFECT_RAINBOW_RGB_TEST
-                            (old_base_mode == RGBLIGHT_MODE_RGB_TEST) ||
-#    endif
-                            (old_base_mode == RGBLIGHT_MODE_STATIC_LIGHT)) {
-                            counter                 = 0;
-                            startup_animation_state = RAMP_TO;
-                        } else {
-                            startup_animation_state = CLEAN_UP;
-                        }
-                    }
-                    break;
-
-                case RAMP_DOWN:
-#    ifdef STARTUP_ANIMATION_DEBUG
-                    dprintf("sua RAMP_DOWN counter=%u\n", counter);
-#    endif
-                    rgblight_sethsv_noeeprom(old_config.hue, STARTUP_ANIMATION_SATURATION, counter);
-                    if (counter >= STARTUP_ANIMATION_FADE_STEP) {
-                        counter -= STARTUP_ANIMATION_FADE_STEP;
-                    } else {
-                        startup_animation_state = CLEAN_UP;
-                    }
-                    break;
-
-                case RAMP_TO: {
-#    ifdef STARTUP_ANIMATION_DEBUG
-                    dprintf("sua RAMP_TO s=%u, v=%u, counter=%u\n", old_config.sat, old_config.val, counter);
-#    endif
-                    uint8_t steps = STARTUP_ANIMATION_RAMP_TO_STEPS;
-                    if (counter < steps) {
-                        uint8_t s = STARTUP_ANIMATION_SATURATION + counter * (((float)old_config.sat - STARTUP_ANIMATION_SATURATION) / (float)steps);
-                        uint8_t v = STARTUP_ANIMATION_VALUE + counter * (((float)old_config.val - STARTUP_ANIMATION_VALUE) / (float)steps);
-                        rgblight_sethsv_noeeprom(old_config.hue, s, v);
-                        counter++;
-                    } else {
-                        startup_animation_state = CLEAN_UP;
-                    }
-                } break;
-
-                case CLEAN_UP:
-#    ifdef STARTUP_ANIMATION_DEBUG
-                    dprintln("sua CLEAN_UP");
-#    endif
-                    rgblight_reload_from_eeprom();
-                    startup_animation_state = DONE;
-#    ifdef STARTUP_ANIMATION_DEBUG
-                    dprintln("sua DONE");
-#    endif
-                    break;
-
-                default:
-                    break;
-            }
-        }
-    }
-#endif
-
+uint32_t change_cb(uint32_t trigger_time, void *cb_arg) {
     if (change_hue != 0 || change_val != 0 || change_sat != 0) {
-        if (timer_elapsed(change_timer) > change_tick) {
-            HSV hsv = rgblight_get_hsv();
-            hsv.h += change_hue;
-            hsv.s = change_sat > 0 ? qadd8(hsv.s, (uint8_t)change_sat) : qsub8(hsv.s, (uint8_t)-change_sat);
-            hsv.v = change_val > 0 ? qadd8(hsv.v, (uint8_t)change_val) : qsub8(hsv.v, (uint8_t)-change_val);
-            rgblight_sethsv_noeeprom(hsv.h, hsv.s, hsv.v);
-            change_timer = timer_read();
-        }
+        HSV hsv = rgblight_get_hsv();
+        hsv.h += change_hue;
+        hsv.s = change_sat > 0 ? qadd8(hsv.s, (uint8_t)change_sat) : qsub8(hsv.s, (uint8_t)-change_sat);
+        hsv.v = change_val > 0 ? qadd8(hsv.v, (uint8_t)change_val) : qsub8(hsv.v, (uint8_t)-change_val);
+        rgblight_sethsv_noeeprom(hsv.h, hsv.s, hsv.v);
     }
+    return change_tick;
+}
+
+deferred_token change_token = 0;
+void           start_change(uint8_t hue, uint8_t sat, uint8_t val) {
+              change_token = defer_exec(change_tick, change_cb, NULL);
+              change_hue   = hue;
+              change_sat   = sat;
+              change_val   = val;
 }
 
 void shutdown_user_rgb(void) {
@@ -388,7 +369,9 @@ void unicode_input_mode_set_user_rgb(uint8_t input_mode) {
 }
 #endif
 
-void rgb_layer_ack_yn(bool yn) { rgb_layer_ack(yn ? ACK_YES : ACK_NO); }
+void rgb_layer_ack_yn(bool yn) {
+    rgb_layer_ack(yn ? ACK_YES : ACK_NO);
+}
 
 void rgb_layer_ack(layer_ack_t n) {
     uint8_t layer = ACK_OFFSET + n;
@@ -401,40 +384,30 @@ extern rgblight_config_t rgblight_config;
 bool process_record_user_rgb(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
         switch (keycode) {
-                // clang-format off
+            // clang-format off
             case SPI_GLO: set_rgb_default(); return false;
 
-            case RGB_HUI: change_timer = timer_read(); change_hue =  1; return false;
-            case RGB_HUD: change_timer = timer_read(); change_hue = -1; return false;
-            case RGB_SAI: change_timer = timer_read(); change_sat =  1; return false;
-            case RGB_SAD: change_timer = timer_read(); change_sat = -1; return false;
-            case RGB_VAI: change_timer = timer_read(); change_val =  1; return false;
-            case RGB_VAD: change_timer = timer_read(); change_val = -1; return false;
-                // clang-format on
+            case RGB_HUI: start_change( 1, 0, 0); return false;
+            case RGB_HUD: start_change(-1, 0, 0); return false;
+            case RGB_SAI: start_change( 0, 1, 0); return false;
+            case RGB_SAD: start_change( 0,-1, 0); return false;
+            case RGB_VAI: start_change( 0, 0, 1); return false;
+            case RGB_VAD: start_change( 0, 0,-1); return false;
+            // clang-format on
         }
     } else {
-        bool rgb_done = false;
         switch (keycode) {
-            case RGB_HUI:
-            case RGB_HUD:
-                change_hue = 0;
-                rgb_done   = true;
-                break;
-            case RGB_SAI:
-            case RGB_SAD:
-                change_sat = 0;
-                rgb_done   = true;
-                break;
-            case RGB_VAI:
-            case RGB_VAD:
-                change_val = 0;
-                rgb_done   = true;
-                break;
-        }
-
-        if (rgb_done) {
-            HSV final = rgblight_get_hsv();
-            rgblight_sethsv(final.h, final.s, final.v);
+            case RGB_HUI ... RGB_VAD:
+                if (change_token) {
+                    cancel_deferred_exec(change_token);
+                    change_token = 0;
+                    change_hue = 0;
+                    change_sat = 0;
+                    change_val = 0;
+                    HSV final = rgblight_get_hsv();
+                    rgblight_sethsv(final.h, final.s, final.v);
+                }
+                return false;
         }
     }
 
