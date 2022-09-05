@@ -31,7 +31,6 @@ enum custom_keycodes {
     SPI_MATH,
     SPI_GFLOCK,
     SPI_KP_00,
-    SPI_GLO,
 };
 
 #ifdef RGBLIGHT_ENABLE
