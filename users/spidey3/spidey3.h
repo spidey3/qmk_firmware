@@ -53,8 +53,6 @@ typedef enum layer_ack {
 
 #    define RGB_LAYER_ACK_DURATION 500
 
-void          matrix_init_user_rgb(void);
-void          matrix_scan_user_rgb(void);
 void          keyboard_post_init_user_rgb(void);
 bool          process_record_user_rgb(uint16_t keycode, keyrecord_t *record);
 void          post_process_record_user_rgb(uint16_t keycode, keyrecord_t *record);
@@ -65,6 +63,7 @@ void          rgb_layer_ack(layer_ack_t n);
 void          rgb_layer_ack_yn(bool yn);
 void          clear_rgb_layers(void);
 void          shutdown_user_rgb(void);
+void          report_version(void);
 
 #    if defined(UNICODE_COMMON_ENABLE)
 void unicode_input_mode_set_user_rgb(uint8_t input_mode);
