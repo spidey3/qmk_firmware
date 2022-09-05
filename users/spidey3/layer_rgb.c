@@ -10,20 +10,6 @@
 extern bool     spi_gflock;
 extern uint16_t spi_replace_mode;
 
-#if 0
-static void set_rgb_default(void) {
-    rgblight_enable();
-    rgblight_sethsv(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, RGBLIGHT_DEFAULT_VAL);
-    rgblight_mode(RGBLIGHT_DEFAULT_MODE);
-#    ifdef VELOCIKEY_ENABLE
-    if (velocikey_enabled()) velocikey_toggle();
-#    endif
-}
-#else
-#    define set_rgb_default() \
-        {}
-#endif
-
 // clang-format off
 
 // Convenience macros
@@ -385,8 +371,6 @@ bool process_record_user_rgb(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
         switch (keycode) {
             // clang-format off
-            case SPI_GLO: set_rgb_default(); return false;
-
             case RGB_HUI: start_change( 1, 0, 0); return false;
             case RGB_HUD: start_change(-1, 0, 0); return false;
             case RGB_SAI: start_change( 0, 1, 0); return false;
