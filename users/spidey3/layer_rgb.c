@@ -386,11 +386,7 @@ bool process_record_user_rgb(uint16_t keycode, keyrecord_t *record) {
                 if (change_token) {
                     cancel_deferred_exec(change_token);
                     change_token = 0;
-                    change_hue   = 0;
-                    change_sat   = 0;
-                    change_val   = 0;
-                    HSV final    = rgblight_get_hsv();
-                    rgblight_sethsv(final.h, final.s, final.v);
+                    eeconfig_update_rgblight_current();
                 }
                 return false;
         }
