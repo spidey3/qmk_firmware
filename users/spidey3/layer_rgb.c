@@ -313,12 +313,13 @@ uint32_t change_cb(uint32_t trigger_time, void *cb_arg) {
     return change_tick;
 }
 
-deferred_token change_token = 0;
-void           start_change(uint8_t hue, uint8_t sat, uint8_t val) {
-              change_token = defer_exec(change_tick, change_cb, NULL);
-              change_hue   = hue;
-              change_sat   = sat;
-              change_val   = val;
+static deferred_token change_token = 0;
+
+void start_change(uint8_t hue, uint8_t sat, uint8_t val) {
+    change_token = defer_exec(change_tick, change_cb, NULL);
+    change_hue   = hue;
+    change_sat   = sat;
+    change_val   = val;
 }
 
 void shutdown_user_rgb(void) {
@@ -377,7 +378,7 @@ bool process_record_user_rgb(uint16_t keycode, keyrecord_t *record) {
             case RGB_SAD: start_change( 0,-1, 0); return false;
             case RGB_VAI: start_change( 0, 0, 1); return false;
             case RGB_VAD: start_change( 0, 0,-1); return false;
-            // clang-format on
+                // clang-format on
         }
     } else {
         switch (keycode) {
@@ -385,10 +386,10 @@ bool process_record_user_rgb(uint16_t keycode, keyrecord_t *record) {
                 if (change_token) {
                     cancel_deferred_exec(change_token);
                     change_token = 0;
-                    change_hue = 0;
-                    change_sat = 0;
-                    change_val = 0;
-                    HSV final = rgblight_get_hsv();
+                    change_hue   = 0;
+                    change_sat   = 0;
+                    change_val   = 0;
+                    HSV final    = rgblight_get_hsv();
                     rgblight_sethsv(final.h, final.s, final.v);
                 }
                 return false;
