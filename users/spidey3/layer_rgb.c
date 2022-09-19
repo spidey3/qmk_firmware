@@ -371,7 +371,7 @@ extern rgblight_config_t rgblight_config;
 bool process_record_user_rgb(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
         switch (keycode) {
-            // clang-format off
+                // clang-format off
             case RGB_HUI: start_change( 1, 0, 0); return false;
             case RGB_HUD: start_change(-1, 0, 0); return false;
             case RGB_SAI: start_change( 0, 1, 0); return false;
