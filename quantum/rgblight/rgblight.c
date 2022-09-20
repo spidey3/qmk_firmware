@@ -1447,6 +1447,8 @@ void rgblight_effect_alternating(animation_status_t *anim) {
 #endif
 
 #ifdef RGBLIGHT_EFFECT_TWINKLE
+#pragma GCC push_options
+#pragma GCC optimize ("O3")
 __attribute__((weak)) const uint8_t RGBLED_TWINKLE_INTERVALS[] PROGMEM = {30, 15, 5};
 
 typedef struct PACKED {
@@ -1509,4 +1511,5 @@ void rgblight_effect_twinkle(animation_status_t *anim) {
 
     rgblight_set();
 }
+#pragma GCC pop_options
 #endif
