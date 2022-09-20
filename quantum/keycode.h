@@ -506,7 +506,8 @@ enum internal_special_keycodes {
     KC_BRIGHTNESS_UP,
     KC_BRIGHTNESS_DOWN,
     KC_CONTROL_PANEL,
-    KC_ASSISTANT // 0xC0
+    KC_ASSISTANT, // 0xC0
+    KC_MIC_MUTE
 };
 
 enum mouse_keys {
