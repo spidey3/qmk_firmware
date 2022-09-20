@@ -161,6 +161,11 @@ void host_consumer_send(uint16_t report) {
     (*driver->send_extra)(REPORT_ID_CONSUMER, report);
 }
 
+void host_mic_mute_send(bool on) {
+    if (!driver) return;
+    (*driver->send_extra)(REPORT_ID_TELEPHONY, on ? 1 : 0);
+}
+
 void host_digitizer_send(digitizer_t *digitizer) {
     if (!driver) return;
 

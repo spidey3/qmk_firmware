@@ -47,6 +47,7 @@ void    host_keyboard_send(report_keyboard_t *report);
 void    host_mouse_send(report_mouse_t *report);
 void    host_system_send(uint16_t data);
 void    host_consumer_send(uint16_t data);
+void    host_mic_mute_send(bool on);
 void    host_programmable_button_send(uint32_t data);
 
 uint16_t host_last_system_report(void);

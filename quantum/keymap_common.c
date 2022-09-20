@@ -64,6 +64,9 @@ action_t action_for_keycode(uint16_t keycode) {
         case KC_AUDIO_MUTE ... KC_ASSISTANT:
             action.code = ACTION_USAGE_CONSUMER(KEYCODE2CONSUMER(keycode));
             break;
+        case KC_MIC_MUTE:
+            action.code = ACTION_USAGE_TELEPHONY(keycode);
+            break;
 #endif
 #ifdef MOUSEKEY_ENABLE
         case KC_MS_UP ... KC_MS_ACCEL2:
