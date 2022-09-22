@@ -110,6 +110,14 @@ void host_keyboard_send(report_keyboard_t *report) {
 }
 
 void host_mouse_send(report_mouse_t *report) {
+    if (debug_keyboard) {
+        dprint("mouse_report: ");
+        for (uint8_t i = 0; i < sizeof(report_mouse_t); i++) {
+            dprintf("%02X ", ((uint8_t *)report)[i]);
+        }
+        dprint("\n");
+    }
+
 #ifdef BLUETOOTH_ENABLE
     if (where_to_send() == OUTPUT_BLUETOOTH) {
 #    ifdef BLUETOOTH_BLUEFRUIT_LE
@@ -139,12 +147,21 @@ void host_system_send(uint16_t report) {
     last_system_report = report;
 
     if (!driver) return;
+
+    if (debug_keyboard) {
+        dprintf("system_report: %02X\n", report);
+    }
+
     (*driver->send_extra)(REPORT_ID_SYSTEM, report);
 }
 
 void host_consumer_send(uint16_t report) {
     if (report == last_consumer_report) return;
     last_consumer_report = report;
+
+    if (debug_keyboard) {
+        dprintf("consumer_report: %02X\n", report);
+    }
 
 #ifdef BLUETOOTH_ENABLE
     if (where_to_send() == OUTPUT_BLUETOOTH) {
@@ -163,6 +180,11 @@ void host_consumer_send(uint16_t report) {
 
 void host_mic_mute_send(bool on) {
     if (!driver) return;
+
+    if (debug_keyboard) {
+        dprint("telephony_report: mic mute toggle\n");
+    }
+
     (*driver->send_extra)(REPORT_ID_TELEPHONY, on ? 1 : 0);
 }
 
