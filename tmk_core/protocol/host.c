@@ -41,6 +41,7 @@ extern keymap_config_t keymap_config;
 static host_driver_t *driver;
 static uint16_t       last_system_report              = 0;
 static uint16_t       last_consumer_report            = 0;
+static uint16_t       last_telephony_report           = 0;
 static uint32_t       last_programmable_button_report = 0;
 
 void host_set_driver(host_driver_t *d) {
@@ -178,14 +179,17 @@ void host_consumer_send(uint16_t report) {
     (*driver->send_extra)(REPORT_ID_CONSUMER, report);
 }
 
-void host_mic_mute_send(bool on) {
+void host_telephony_send(uint16_t report) {
+    if (report == last_telephony_report) return;
+    last_telephony_report = report;
+
     if (!driver) return;
 
     if (debug_keyboard) {
-        dprint("telephony_report: mic mute toggle\n");
+        dprintf("telephony_report: %02X\n", report);
     }
 
-    (*driver->send_extra)(REPORT_ID_TELEPHONY, on ? 1 : 0);
+    (*driver->send_extra)(REPORT_ID_TELEPHONY, report);
 }
 
 void host_digitizer_send(digitizer_t *digitizer) {
@@ -220,6 +224,10 @@ uint16_t host_last_system_report(void) {
 
 uint16_t host_last_consumer_report(void) {
     return last_consumer_report;
+}
+
+uint16_t host_last_telephony_report(void) {
+    return last_telephony_report;
 }
 
 uint32_t host_last_programmable_button_report(void) {

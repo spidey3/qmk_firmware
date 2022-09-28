@@ -496,7 +496,7 @@ void process_action(keyrecord_t *record, action_t action) {
                     host_consumer_send(event.pressed ? action.usage.code : 0);
                     break;
                 case PAGE_TELEPHONY:
-                    host_mic_mute_send(event.pressed);
+                    host_telephony_send(event.pressed ? action.usage.code : 0);
                     break;
             }
             break;
@@ -903,8 +903,8 @@ __attribute__((weak)) void register_code(uint8_t code) {
         host_system_send(KEYCODE2SYSTEM(code));
     } else if IS_CONSUMER (code) {
         host_consumer_send(KEYCODE2CONSUMER(code));
-    } else if (code == KC_MIC_MUTE) {
-        host_mic_mute_send(true);
+    } else if IS_TELEPHONY (code) {
+        host_telephony_send(KEYCODE2TELEPHONY(code));
 #endif
 
 #ifdef MOUSEKEY_ENABLE
@@ -961,12 +961,12 @@ __attribute__((weak)) void unregister_code(uint8_t code) {
         send_keyboard_report();
 
 #ifdef EXTRAKEY_ENABLE
-    } else if (code == KC_MIC_MUTE) {
-        host_mic_mute_send(false);
     } else if IS_SYSTEM (code) {
         host_system_send(0);
     } else if IS_CONSUMER (code) {
         host_consumer_send(0);
+    } else if IS_TELEPHONY (code) {
+        host_telephony_send(0);
 #endif
 
 #ifdef MOUSEKEY_ENABLE
