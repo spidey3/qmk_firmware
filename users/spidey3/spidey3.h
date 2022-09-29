@@ -33,6 +33,10 @@ enum custom_keycodes {
     SPI_KP_00,
 };
 
+#if defined(CONSOLE_ENABLE) && !defined(NO_DEBUG)
+void report_version(void);
+#endif
+
 #ifdef RGBLIGHT_ENABLE
 
 enum layer_base {
@@ -60,7 +64,6 @@ void          rgb_layer_ack(layer_ack_t n);
 void          rgb_layer_ack_yn(bool yn);
 void          clear_rgb_layers(void);
 void          shutdown_user_rgb(void);
-void          report_version(void);
 
 #    if defined(UNICODE_COMMON_ENABLE)
 void unicode_input_mode_set_user_rgb(uint8_t input_mode);
