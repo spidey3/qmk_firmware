@@ -42,7 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * ACT_USAGE(0100): TODO: Not needed?
  * 0100|00| usage(10)     System control(0x80) - General Desktop page(0x01)
  * 0100|01| usage(10)     Consumer control(0x01) - Consumer page(0x0C)
- * 0100|10| usage(10)     (reserved)
+ * 0100|10| usage(10)     Consumer control(0x01) - Telephony page(0x0B)
  * 0100|11| usage(10)     (reserved)
  *
  * ACT_MOUSEKEY(0101): TODO: Merge these two actions to conserve space?
@@ -195,10 +195,12 @@ enum mods_codes {
 enum usage_pages {
     PAGE_SYSTEM,
     PAGE_CONSUMER,
+    PAGE_TELEPHONY,
 };
 
 #define ACTION_USAGE_SYSTEM(id) ACTION(ACT_USAGE, PAGE_SYSTEM << 10 | (id))
 #define ACTION_USAGE_CONSUMER(id) ACTION(ACT_USAGE, PAGE_CONSUMER << 10 | (id))
+#define ACTION_USAGE_TELEPHONY(id) ACTION(ACT_USAGE, PAGE_TELEPHONY << 10 | (id))
 #define ACTION_MOUSEKEY(key) ACTION(ACT_MOUSEKEY, key)
 
 /** \brief Layer Actions

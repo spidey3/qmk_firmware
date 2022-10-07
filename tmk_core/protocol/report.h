@@ -32,7 +32,8 @@ enum hid_report_ids {
     REPORT_ID_PROGRAMMABLE_BUTTON,
     REPORT_ID_NKRO,
     REPORT_ID_JOYSTICK,
-    REPORT_ID_DIGITIZER
+    REPORT_ID_DIGITIZER,
+    REPORT_ID_TELEPHONY
 };
 
 /* Mouse buttons */
@@ -118,6 +119,13 @@ enum desktop_usages {
     SYSTEM_RESTART                = 0x8F,
     // 4.10 System Display Controls
     SYSTEM_DISPLAY_TOGGLE_INT_EXT = 0xB5
+};
+
+enum telephony_usages {
+    // 14.3 Call Control
+    HOOK_SWITCH                   = 0x020,
+    DROP                          = 0x026,
+    PHONE_MUTE                    = 0x02F
 };
 
 // clang-format on
@@ -314,6 +322,20 @@ static inline uint16_t KEYCODE2CONSUMER(uint8_t key) {
             return BRIGHTNESS_DOWN;
         case KC_WWW_FAVORITES:
             return AC_BOOKMARKS;
+        default:
+            return 0;
+    }
+}
+
+/* keycode to telephony usage */
+static inline uint16_t KEYCODE2TELEPHONY(uint8_t key) {
+    switch (key) {
+        case KC_HOOK_SWITCH:
+            return HOOK_SWITCH;
+        case KC_DROP:
+            return DROP;
+        case KC_MIC_MUTE:
+            return PHONE_MUTE;
         default:
             return 0;
     }

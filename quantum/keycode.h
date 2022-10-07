@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define IS_SPECIAL(code) ((0xA5 <= (code) && (code) <= 0xDF) || (0xE8 <= (code) && (code) <= 0xFF))
 #define IS_SYSTEM(code) (KC_PWR <= (code) && (code) <= KC_WAKE)
 #define IS_CONSUMER(code) (KC_MUTE <= (code) && (code) <= KC_ASST)
+#define IS_TELEPHONY(code) (KC_HOOK_SWITCH <= (code) && (code) <= KC_MIC_MUTE)
 
 #define IS_MOUSEKEY(code) (KC_MS_UP <= (code) && (code) <= KC_MS_ACCEL2)
 #define IS_MOUSEKEY_MOVE(code) (KC_MS_UP <= (code) && (code) <= KC_MS_RIGHT)
@@ -181,6 +182,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KC_PWR  KC_SYSTEM_POWER
 #define KC_SLEP KC_SYSTEM_SLEEP
 #define KC_WAKE KC_SYSTEM_WAKE
+
+/* Telephony Page (0x0B) */
+#define KC_HOOK KC_HOOK_SWITCH
+#define KC_MMUT KC_MIC_MUTE
 
 /* Consumer Page (0x0C) */
 #define KC_MUTE KC_AUDIO_MUTE
@@ -506,7 +511,10 @@ enum internal_special_keycodes {
     KC_BRIGHTNESS_UP,
     KC_BRIGHTNESS_DOWN,
     KC_CONTROL_PANEL,
-    KC_ASSISTANT // 0xC0
+    KC_ASSISTANT, // 0xC0
+    KC_HOOK_SWITCH,
+    KC_DROP,
+    KC_MIC_MUTE
 };
 
 enum mouse_keys {

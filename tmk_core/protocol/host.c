@@ -41,8 +41,9 @@ extern keymap_config_t keymap_config;
 #endif
 
 static host_driver_t *driver;
-static uint16_t       last_system_usage   = 0;
-static uint16_t       last_consumer_usage = 0;
+static uint16_t       last_system_usage    = 0;
+static uint16_t       last_consumer_usage  = 0;
+static uint16_t       last_telephony_usage = 0;
 
 void host_set_driver(host_driver_t *d) {
     driver = d;
@@ -107,6 +108,14 @@ void host_keyboard_send(report_keyboard_t *report) {
 }
 
 void host_mouse_send(report_mouse_t *report) {
+    if (debug_keyboard) {
+        dprint("mouse_report: ");
+        for (uint8_t i = 0; i < sizeof(report_mouse_t); i++) {
+            dprintf("%02X ", ((uint8_t *)report)[i]);
+        }
+        dprint("\n");
+    }
+
 #ifdef BLUETOOTH_ENABLE
     if (where_to_send() == OUTPUT_BLUETOOTH) {
         bluetooth_send_mouse(report);
@@ -126,6 +135,14 @@ void host_mouse_send(report_mouse_t *report) {
     (*driver->send_mouse)(report);
 }
 
+__attribute__((noinline)) void debug_extra_report(char *kind, report_extra_t *report) {
+    if (debug_keyboard) {
+        dprintf("extra_report: kind=%s report_id=%02X usage=%04X\n", 
+                kind, report->report_id, report->usage);
+        dprint("\n");
+    }
+}
+
 void host_system_send(uint16_t usage) {
     if (usage == last_system_usage) return;
     last_system_usage = usage;
@@ -137,6 +154,7 @@ void host_system_send(uint16_t usage) {
         .usage     = usage,
     };
     (*driver->send_extra)(&report);
+    debug_extra_report("system", &report);
 }
 
 void host_consumer_send(uint16_t usage) {
@@ -157,6 +175,21 @@ void host_consumer_send(uint16_t usage) {
         .usage     = usage,
     };
     (*driver->send_extra)(&report);
+    debug_extra_report("consumer", &report);
+}
+
+void host_telephony_send(uint16_t usage) {
+    if (usage == last_telephony_usage) return;
+    last_telephony_usage = usage;
+
+    if (!driver) return;
+
+    report_extra_t report = {
+        .report_id = REPORT_ID_TELEPHONY,
+        .usage     = usage,
+    };
+    (*driver->send_extra)(&report);
+    debug_extra_report("telephony", &report);
 }
 
 #ifdef JOYSTICK_ENABLE
@@ -248,4 +281,8 @@ uint16_t host_last_system_usage(void) {
 
 uint16_t host_last_consumer_usage(void) {
     return last_consumer_usage;
+}
+
+uint16_t host_last_telephony_usage(void) {
+    return last_telephony_usage;
 }
