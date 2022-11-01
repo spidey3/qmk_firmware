@@ -586,6 +586,8 @@
                 "force_hold_per_key": {"type": "boolean"},
                 "ignore_mod_tap_interrupt": {"type": "boolean"},
                 "ignore_mod_tap_interrupt_per_key": {"type": "boolean"},
+                "hold_on_other_key_press": {"type": "boolean"},
+                "hold_on_other_key_press_per_key": {"type": "boolean"},
                 "permissive_hold": {"type": "boolean"},
                 "permissive_hold_per_key": {"type": "boolean"},
                 "retro": {"type": "boolean"},
@@ -599,7 +601,10 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "device_ver": {"$ref": "qmk.definitions.v1#/hex_number_4d"}, # Deprecated
+                "device_ver": {
+                    "$ref": "qmk.definitions.v1#/hex_number_4d",
+                    "$comment": "Deprecated: use device_version instead"
+                },
                 "device_version": {"$ref": "qmk.definitions.v1#/bcd_version"},
                 "force_nkro": {"type": "boolean"},
                 "pid": {"$ref": "qmk.definitions.v1#/hex_number_4d"},

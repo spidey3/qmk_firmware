@@ -70,7 +70,7 @@ def generate_matrix_size(kb_info_json, config_h_lines):
 def generate_config_items(kb_info_json, config_h_lines):
     """Iterate through the info_config map to generate basic config values.
     """
-    info_config_map = json_load(Path('data/mappings/info_config.json'))
+    info_config_map = json_load(Path('data/mappings/info_config.hjson'))
 
     for config_key, info_dict in info_config_map.items():
         info_key = info_dict['info_key']
@@ -174,7 +174,7 @@ def generate_config_h(cli):
     # Determine our keyboard/keymap
     if cli.args.filename:
         user_keymap = parse_configurator_json(cli.args.filename)
-        kb_info_json = user_keymap.get('config', {})
+        kb_info_json = dotty(user_keymap.get('config', {}))
     elif cli.args.keyboard:
         kb_info_json = dotty(info_json(cli.args.keyboard))
     else:
