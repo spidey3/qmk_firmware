@@ -31,8 +31,11 @@ enum custom_keycodes {
     SPI_MATH,
     SPI_GFLOCK,
     SPI_KP_00,
-    SPI_GLO,
 };
+
+#if defined(CONSOLE_ENABLE) && !defined(NO_DEBUG)
+void report_version(void);
+#endif
 
 #ifdef RGBLIGHT_ENABLE
 
@@ -51,8 +54,6 @@ typedef enum layer_ack {
 
 #    define RGB_LAYER_ACK_DURATION 500
 
-void          matrix_init_user_rgb(void);
-void          matrix_scan_user_rgb(void);
 void          keyboard_post_init_user_rgb(void);
 bool          process_record_user_rgb(uint16_t keycode, keyrecord_t *record);
 void          post_process_record_user_rgb(uint16_t keycode, keyrecord_t *record);
