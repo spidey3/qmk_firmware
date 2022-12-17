@@ -13,22 +13,15 @@ uint16_t spi_replace_mode = SPI_NORMAL;
 bool     spi_gflock       = false;
 
 #if defined(CONSOLE_ENABLE) && !defined(NO_DEBUG)
-static uint32_t matrix_scan_count = 0;
-static bool     reported_version  = false;
+void __attribute__((noinline)) report_version(void) {
+    uprintln(QMK_KEYBOARD "/" QMK_KEYMAP " @ " QMK_VERSION " - " QMK_BUILDDATE);
+}
 
 #    if defined(SPI_DEBUG_SCAN_RATE)
-static uint32_t matrix_timer = 0;
-#    endif
-
-void report_version(void) {
-    uprintln(QMK_KEYBOARD "/" QMK_KEYMAP " @ " QMK_VERSION " - " QMK_BUILDDATE);
-    reported_version = true;
-}
-#endif
+static uint32_t matrix_scan_count = 0;
+static uint32_t matrix_timer      = 0;
 
 void matrix_scan_user(void) {
-#if defined(CONSOLE_ENABLE) && !defined(NO_DEBUG)
-#    if defined(SPI_DEBUG_SCAN_RATE)
     matrix_scan_count++;
     if (debug_enable) {
         uint32_t timer_now = timer_read32();
@@ -39,20 +32,11 @@ void matrix_scan_user(void) {
             matrix_timer = timer_now;
             uprintf("scan rate: %lu/s\n", matrix_scan_count / SPI_SCAN_RATE_INTERVAL);
             matrix_scan_count = 0;
-            if (!reported_version) report_version();
         }
     }
-#    else
-    if (!reported_version) {
-        matrix_scan_count++;
-        if (matrix_scan_count > 300) report_version();
-    }
+}
 #    endif
 #endif
-#ifdef RGBLIGHT_ENABLE
-    matrix_scan_user_rgb();
-#endif
-}
 
 static uint32_t math_glyph_exceptions(const uint16_t keycode, const bool shifted) {
     bool caps = host_keyboard_led_state().caps_lock;
@@ -171,7 +155,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
         switch (keycode) {
 #ifndef NO_DEBUG
-            // Re-implement this here, but fix the persistence!
+            // Re-implement this here, but smarter, and fix the persistence!
             case QK_DEBUG_TOGGLE:
                 if (get_mods() & MOD_MASK_SHIFT) {
                     debug_enable   = 0;
@@ -179,9 +163,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                     debug_matrix   = 0;
                 } else if (!debug_enable) {
                     debug_enable = 1;
+                    report_version();
 #    if defined(SPI_DEBUG_SCAN_RATE)
                     matrix_timer = 0;
-                    report_version();
 #    endif
                 } else if (!debug_keyboard) {
                     debug_keyboard = 1;
