@@ -116,21 +116,15 @@ CONSOLE_ENABLE = yes
 
 And also include `"os_detection.h"` in your `keymap.c`.
 
-Then you can define custom keycodes to store data about USB setup packets in EEPROM (persistent memory) and to print it later on host where you can run `qmk console`:
+Then you can define custom keycodes to print the stored USB setup packets on host where you can run `qmk console`:
 
 ```c
 enum custom_keycodes {
-    STORE_SETUPS = SAFE_RANGE,
-    PRINT_SETUPS,
+    PRINT_SETUPS = SAFE_RANGE
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-        case STORE_SETUPS:
-            if (record->event.pressed) {
-                store_setups_in_eeprom();
-            }
-            return false;
         case PRINT_SETUPS:
             if (record->event.pressed) {
                 print_stored_setups();
