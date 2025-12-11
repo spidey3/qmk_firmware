@@ -24,6 +24,7 @@
 
 #ifdef OS_DETECTION_DEBUG_ENABLE
 #    include "eeconfig.h"
+#    include "nvm_eeprom_eeconfig_internal.h"
 #    include "eeprom.h"
 #    include "print.h"
 
