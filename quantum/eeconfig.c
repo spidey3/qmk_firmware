@@ -67,6 +67,8 @@ __attribute__((weak)) void eeconfig_init_kb(void) {
     eeconfig_init_user();
 }
 
+__attribute__((weak)) void eeconfig_init_modules(void) {}
+
 void eeconfig_init_quantum(void) {
     nvm_eeconfig_erase();
 
@@ -157,6 +159,7 @@ void eeconfig_init_quantum(void) {
     dynamic_keymap_reset();
 #endif
 
+    eeconfig_init_modules();
     eeconfig_init_kb();
 
 #ifdef RGB_MATRIX_ENABLE
